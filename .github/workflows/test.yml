@@ -29,7 +29,9 @@ jobs:
         run: |
           curl -L https://github.com/NethermindEth/sedge/releases/latest/download/sedge-linux-amd64 -o sedge
           chmod +x sedge
-          sudo mv sedge /usr/local/bin/
+          sudo mv sedge /usr/local/bin/sedge
+          sudo ln -s /usr/local/bin/sedge /usr/bin/sedge
+          sedge --version
 
       - name: Setup Sedge environment
         run: |
