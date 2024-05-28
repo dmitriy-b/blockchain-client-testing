@@ -51,11 +51,6 @@ jobs:
           which sedge  # Verify the location of sedge
           sedge version  # Check if sedge is executable
 
-      - name: Check Sedge dependencies
-        run: |
-          sedge deps check >> sedge.logs &
-          cp /home/runner/.env .
-          cp /home/runner/docker-compose.yml . 
             
       - name: Setup Sedge environment
         run: |
@@ -69,6 +64,12 @@ jobs:
           --el-extra-flag Sync.DownloadReceiptsInFastSync=false \
           --el-extra-flag JsonRpc.EnabledModules=[Eth,TxPool,Web3,Net,Health,Rpc,Debug] \
           --cl-extra-flag checkpoint-sync-url=http://139.144.26.89:4000/ >> sedge.logs
+
+      - name: Check Sedge dependencies
+        run: |
+          cp /home/runner/.env .
+          cp /home/runner/docker-compose.yml . 
+          sedge deps check >> sedge.logs & 
 
       - name: Run Sedge
         run: sedge run -p . >> sedge.logs &
