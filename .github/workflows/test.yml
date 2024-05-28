@@ -14,7 +14,7 @@ jobs:
       - name: Set Swap Space
         uses: pierotofy/set-swap-space@master
         with:
-          swap-size-gb: 10
+          swap-size-gb: 15
 
       - name: Install dependencies
         run: |
@@ -120,7 +120,7 @@ jobs:
               break
             fi
             du -sh  execution-data/
-            sleep 30
+            sleep 20
           done
 
       - name: Install Python dependencies
