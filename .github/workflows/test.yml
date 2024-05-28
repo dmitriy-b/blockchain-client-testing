@@ -31,6 +31,7 @@ jobs:
           sudo chmod +x docker-compose
           sudo mv docker-compose /usr/local/bin/docker-compose
           sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+          which docker-compose
           docker-compose --version
 
       - name: Download Sedge
@@ -50,6 +51,9 @@ jobs:
           which sedge  # Verify the location of sedge
           sedge version  # Check if sedge is executable
 
+      - name: Check Sedge dependencies
+        run: sedge deps check >> sedge.logs &
+            
       - name: Setup Sedge environment
         run: |
           sedge deps install >> sedge.logs
