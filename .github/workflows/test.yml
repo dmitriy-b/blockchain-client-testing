@@ -85,7 +85,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Wait for Nethermind synchronization complete
-        timeout-minutes: 30
+        timeout-minutes: 50
         run: |
           echo "Waiting for Nethermind to synchronize..."
           while true; do
@@ -125,6 +125,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Run verification tests
+        run: |
+          pytest tests/test_json_rpc.py
+
+      - name: Stop sedge
+        if: always()
+        run: |
+          sedge -p $PWD down
+          sleep 30
+
       - name: Fix caching permissions
         if: always()
         run: |
@@ -141,9 +151,6 @@ jobs:
             execution-data
           key: ${{ steps.cache-restore.outputs.cache-primary-key }}-${{ github.run_id }}
 
-      - name: Run verification tests
-        run: |
-          pytest tests/test_json_rpc.py
 
       - name: Upload Sedge logs
         if: failure()
