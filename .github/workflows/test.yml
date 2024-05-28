@@ -40,7 +40,7 @@ jobs:
           sudo mv sedge /usr/local/bin/sedge
           sudo ln -s /usr/local/bin/sedge /usr/bin/sedge
           which sedge  # Verify the location of sedge
-          sedge --version  # Check if sedge is executable
+          sedge version  # Check if sedge is executable
 
       - name: Setup Sedge environment
         run: |
