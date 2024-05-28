@@ -25,13 +25,22 @@ jobs:
           sudo apt-get install -y docker-ce
           sudo usermod -aG docker $USER
 
-      - name: Install Sedge
+      - name: Download Sedge
         run: |
-          curl -L https://github.com/NethermindEth/sedge/releases/latest/download/sedge-linux-amd64 -o sedge
+          curl -L https://github.com/NethermindEth/sedge/releases/download/v1.3.2/sedge-v1.3.2-linux-amd64 --output sedge
+          ls -l sedge  # List file details to check download
+
+      - name: Set permissions for Sedge
+        run: |
           chmod +x sedge
+          ls -l sedge  # List file details to check permissions
+
+      - name: Move Sedge to /usr/local/bin
+        run: |
           sudo mv sedge /usr/local/bin/sedge
           sudo ln -s /usr/local/bin/sedge /usr/bin/sedge
-          sedge --version
+          which sedge  # Verify the location of sedge
+          sedge --version  # Check if sedge is executable
 
       - name: Setup Sedge environment
         run: |
