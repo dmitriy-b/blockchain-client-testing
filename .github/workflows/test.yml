@@ -71,13 +71,21 @@ jobs:
           cp /home/runner/docker-compose.yml . 
           sedge deps check >> sedge.logs & 
 
+      - name: Restore network cache
+        id: cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            consensus-data
+            execution-data
+          key: cache-network
+
       - name: Run Sedge
         run: sedge run -p . >> sedge.logs &
         timeout-minutes: 5
 
-
       - name: Wait for Nethermind synchronization complete
-        timeout-minutes: 20
+        timeout-minutes: 30
         run: |
           echo "Waiting for Nethermind to synchronize..."
           while true; do
@@ -107,8 +115,6 @@ jobs:
               echo "Synchronization completed."
               break
             fi
-            ls -la
-            du -sh  consensus-data/
             du -sh  execution-data/
             sleep 30
           done
@@ -118,6 +124,22 @@ jobs:
           ls -la
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Fix caching permissions
+        if: always()
+        run: |
+          sudo chmod -R a+r consensus-data
+          sudo chmod -R a+r execution-data
+
+      - name: Save network cache
+        if: always()
+        id: cache-save
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            consensus-data
+            execution-data
+          key: ${{ steps.cache-restore.outputs.cache-primary-key }}-${{ github.run_id }}
 
       - name: Run verification tests
         run: |
