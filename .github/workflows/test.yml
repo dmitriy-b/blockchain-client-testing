@@ -90,7 +90,7 @@ jobs:
         run: sedge run -p . >> sedge.logs &
 
       - name: Wait for Nethermind synchronization complete
-        timeout-minutes: 15
+        timeout-minutes: 20
         run: |
           echo "Waiting for Nethermind to synchronize..."
           while true; do
