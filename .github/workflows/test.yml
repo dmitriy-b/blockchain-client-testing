@@ -76,6 +76,25 @@ jobs:
         timeout-minutes: 5
 
       - name: Wait for Nethermind synchronization
+        timeout-minutes: 5
+        run: |
+          echo "Waiting for Nethermind to synchronize..."
+          while true; do
+            response=$(curl -s localhost:8545 -X POST -H "Content-Type: application/json" --data '{
+              "jsonrpc": "2.0",
+              "id": 0,
+              "method": "debug_getSyncStage",
+              "params": []
+            }')
+            echo "Response: $response"
+            if echo "$response" | grep -q '"currentStage":"WaitingForBlock"'; then
+              echo "Synchronization completed."
+              break
+            fi
+            sleep 30
+          done
+
+      - name: Wait for Nethermind synchronization
         run: sleep 300
 
       - name: Install Python dependencies
