@@ -75,13 +75,26 @@ jobs:
         run: sedge run -p . >> sedge.logs &
         timeout-minutes: 5
 
-      - name: Wait for Nethermind synchronization
-        run: sleep 300
 
       - name: Wait for Nethermind synchronization complete
-        timeout-minutes: 5
+        timeout-minutes: 20
         run: |
           echo "Waiting for Nethermind to synchronize..."
+          while true; do
+            if curl -s localhost:8545 > /dev/null; then
+              break
+            fi
+            sleep 10
+          done
+          echo "Nethermind is up. Checking sync status..."
+          cho "Sending eth_syncing request..."
+          response=$(curl localhost:8545   -X POST   -H "Content-Type: application/json"   --data '{
+            "jsonrpc": "2.0",
+            "id": 0,
+            "method": "eth_syncing",
+            "params": []
+          }')
+          echo "Response: $response"
           while true; do
             response=$(curl -s localhost:8545 -X POST -H "Content-Type: application/json" --data '{
               "jsonrpc": "2.0",
@@ -99,6 +112,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
+          ls -la
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
