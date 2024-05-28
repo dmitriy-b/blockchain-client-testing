@@ -1,0 +1,68 @@
+name: Nethermind JSON-RPC Tests
+
+on: [push, pull_request]
+
+jobs:
+  setup-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq
+
+      - name: Install Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+          sudo apt-get update
+          sudo apt-get install -y docker-ce
+          sudo usermod -aG docker $USER
+
+      - name: Install Sedge
+        run: |
+          curl -L https://github.com/NethermindEth/sedge/releases/latest/download/sedge-linux-amd64 -o sedge
+          chmod +x sedge
+          sudo mv sedge /usr/local/bin/
+
+      - name: Setup Sedge environment
+        run: |
+          ./sedge deps install >>sedge.logs
+          ./sedge generate --logging none -p $HOME full-node \
+          --map-all --no-mev-boost --no-validator \
+          --network chiado -c lighthouse:sigp/lighthouse:latest \
+          -e nethermind:nethermindeth/nethermind:master \
+          --el-extra-flag Sync.NonValidatorNode=true \
+          --el-extra-flag Sync.DownloadBodiesInFastSync=false \
+          --el-extra-flag Sync.DownloadReceiptsInFastSync=false \
+          --el-extra-flag JsonRpc.EnabledModules=[Eth,TxPool,Web3,Net,Health,Rpc,Debug] \
+          --cl-extra-flag checkpoint-sync-url=http://139.144.26.89:4000/ >>sedge.logs
+
+      - name: Run Sedge
+        run: ./sedge run -p . >>sedge.logs &
+        timeout-minutes: 5
+
+      - name: Wait for Nethermind synchronization
+        run: sleep 300
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run verification tests
+        run: |
+          pytest tests/test_json_rpc.py
+
+      - name: Upload Sedge logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: sedge-logs
+          path: sedge.logs
