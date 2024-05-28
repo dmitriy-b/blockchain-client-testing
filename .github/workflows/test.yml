@@ -52,7 +52,10 @@ jobs:
           sedge version  # Check if sedge is executable
 
       - name: Check Sedge dependencies
-        run: sedge deps check >> sedge.logs &
+        run: |
+          sedge deps check >> sedge.logs &
+          cp /home/runner/.env .
+          cp /home/runner/docker-compose.yml . 
             
       - name: Setup Sedge environment
         run: |
