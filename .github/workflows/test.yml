@@ -87,7 +87,7 @@ jobs:
             sleep 10
           done
           echo "Nethermind is up. Checking sync status..."
-          cho "Sending eth_syncing request..."
+          echo "Sending eth_syncing request..."
           response=$(curl localhost:8545   -X POST   -H "Content-Type: application/json"   --data '{
             "jsonrpc": "2.0",
             "id": 0,
@@ -107,6 +107,9 @@ jobs:
               echo "Synchronization completed."
               break
             fi
+            ls -la
+            du -sh  consensus-data/
+            du -sh  execution-data/
             sleep 30
           done
 
