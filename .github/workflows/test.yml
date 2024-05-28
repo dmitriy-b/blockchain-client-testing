@@ -76,6 +76,9 @@ jobs:
         timeout-minutes: 5
 
       - name: Wait for Nethermind synchronization
+        run: sleep 300
+
+      - name: Wait for Nethermind synchronization complete
         timeout-minutes: 5
         run: |
           echo "Waiting for Nethermind to synchronize..."
@@ -93,9 +96,6 @@ jobs:
             fi
             sleep 30
           done
-
-      - name: Wait for Nethermind synchronization
-        run: sleep 300
 
       - name: Install Python dependencies
         run: |
