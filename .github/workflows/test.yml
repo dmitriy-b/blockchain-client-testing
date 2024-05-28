@@ -5,10 +5,16 @@ on: [push, pull_request]
 jobs:
   setup-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 10
 
       - name: Install dependencies
         run: |
@@ -82,10 +88,8 @@ jobs:
 
       - name: Run Sedge
         run: sedge run -p . >> sedge.logs &
-        timeout-minutes: 5
 
       - name: Wait for Nethermind synchronization complete
-        timeout-minutes: 50
         run: |
           echo "Waiting for Nethermind to synchronize..."
           while true; do
