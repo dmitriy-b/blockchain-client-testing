@@ -192,18 +192,23 @@ Run the verification and performance tests:
 
 Verification Scenario 1
 ``` bash
-LOG_FILE_NAME=verification pytest tests/test_json_rpc.py
+pytest tests/test_json_rpc.py
 ``` 
 
 Performance Scenario 1
 ``` bash
-LOG_STDOUT_LEVEL=ERROR LOG_FILE_NAME=performance_1 pytest -k "test_performance_1"
+LOG_STDOUT_LEVEL=ERROR pytest -k "test_performance_1"
 ```
+For this scenario, we generate 1,000 users and execute the test for 60 seconds, resulting in approximately 200 RPS (requests per second). If we need to achieve a higher number of requests, we can adjust the `scenario_1_users` and `scenario_1_duration` variables in the `pytest.ini` file.
+
 
 Performance Scenario 2
 ``` bash
-LOG_STDOUT_LEVEL=ERROR LOG_FILE_NAME=performance_2 pytest -k "test_performance_2"
+LOG_STDOUT_LEVEL=ERROR pytest -k "test_performance_2"
 ```
+
+For this scenario we generate 10,000 users, executes the test during 300 seconds and reached about 800 RPS on CI. As above, we can change `scenario_2_users` /  `scenario_2_duration` variable in `pytest.ini` to increase the number of requests.
+
 Note. We can override any variable from `pytest.ini` by using environment variables. For example, `LOG_STDOUT_LEVEL` links to `log_stdout_level` from `[general]` section.
 It is also possible to specify the section by starting pytest with `--env`, e.g. `--env=general`. 
 

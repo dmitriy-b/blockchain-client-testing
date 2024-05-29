@@ -132,15 +132,15 @@ jobs:
 
       - name: Run verification scenario 1
         run: |
-          LOG_FILE_NAME=verification pytest tests/test_json_rpc.py
+          pytest tests/test_json_rpc.py --html=reports/integration_tests.html
       
       - name: Run performance scenario 1
         run: |
-          LOG_STDOUT_LEVEL=ERROR LOG_FILE_NAME=performance_1 pytest -k "test_performance_1"
+          LOG_STDOUT_LEVEL=ERROR pytest -k "test_performance_1"
 
       - name: Run performance scenario 2
         run: |
-          LOG_STDOUT_LEVEL=ERROR LOG_FILE_NAME=performance_1 pytest -k "test_performance_2"
+          LOG_STDOUT_LEVEL=ERROR pytest -k "test_performance_2"
 
       - name: Stop sedge
         if: always()
