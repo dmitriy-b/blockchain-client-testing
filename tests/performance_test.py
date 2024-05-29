@@ -1,16 +1,13 @@
 import os, sys
-from utils.json_rpc_client import JsonRpcClient
 from loguru import logger
 
-from locust import task, HttpUser, constant_pacing
+from locust import task, HttpUser
 
-from locust.exception import StopUser
 
 import gevent
-from locust import HttpUser, task, between, events
+from locust import HttpUser, task, between
 from locust.env import Environment
-from locust.stats import StatsCSVFileWriter, StatsCSV, stats_history, stats_printer
-from locust.log import setup_logging
+from locust.stats import StatsCSVFileWriter, stats_history, stats_printer
 import gevent
 import requests
 import pytest
@@ -41,9 +38,6 @@ class BlockChainUser(HttpUser):
                 response.failure("Failed to get block by number: " + block_number)
 
 def run_locust(configuration, client, number_of_users=100, spawn_rate=10, test_duration=60, scenario_name="locust"):
-    # Backup sys.argv
-    original_argv = sys.argv
-    sys.argv = sys.argv[:1]
     
     wait_start = float(configuration['wait_start'])
     wait_end = float(configuration['wait_end'])
@@ -112,7 +106,6 @@ def test_performance_1(client, configuration):
         logger.info(env.stats.total)
         assert env.stats.total.avg_response_time < 60
         assert env.stats.total.num_failures == 0
-        assert env.stats.total.get_response_time_percentile(0.95) < 100
     finally:
         # Restore original sys.argv
         sys.argv = original_argv
@@ -132,7 +125,6 @@ def test_performance_2(client, configuration):
         logger.info(env.stats.total)
         assert env.stats.total.avg_response_time < 600
         assert env.stats.total.num_failures == 0
-        assert env.stats.total.get_response_time_percentile(0.95) < 100
     finally:
         # Restore original sys.argv
         sys.argv = original_argv

@@ -136,11 +136,11 @@ jobs:
       
       - name: Run performance scenario 1
         run: |
-          LOG_FILE_NAME=performance_1 pytest -k "test_performance_1"
+          LOG_STDOUT_LEVEL=ERROR LOG_FILE_NAME=performance_1 pytest -k "test_performance_1"
 
       - name: Run performance scenario 2
         run: |
-          LOG_FILE_NAME=performance_1 pytest -k "test_performance_2"
+          LOG_STDOUT_LEVEL=ERROR LOG_FILE_NAME=performance_1 pytest -k "test_performance_2"
 
       - name: Stop sedge
         if: always()

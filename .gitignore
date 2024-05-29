@@ -166,3 +166,7 @@ jwtsecret
 sedge
 sedge.logs
 docker-compose.yml
+reports/*.html
+reports/*.csv
+reports/*.json
+reports/assets
