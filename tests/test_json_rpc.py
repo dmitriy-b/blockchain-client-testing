@@ -12,29 +12,29 @@ def test_eth_get_block_by_number(client):
     response = client.call("eth_getBlockByNumber", [block_number, True])
     assert 'result' in response
     assert response['result'] is not None
-    # assert response['result']['author'] is not None
-    # assert response['result']['difficulty'] is not None
-    # assert response['result']['extraData'] is not None
-    # assert response['result']['gasLimit'] is not None
-    # assert response['result']['gasUsed'] is not None
-    # assert response['result']['hash'] is not None
-    # assert response['result']['logsBloom'] is not None
-    # assert response['result']['miner'] is not None
-    # assert response['result']['mixHash'] is not None
-    # assert response['result']['nonce'] is not None
-    # assert response['result']['number'] is not None
-    # assert response['result']['parentHash'] is not None
-    # assert response['result']['receiptsRoot'] is not None
-    # assert response['result']['sha3Uncles'] is not None
-    # assert response['result']['size'] is not None
-    # assert response['result']['stateRoot'] is not None
-    # assert response['result']['totalDifficulty'] is not None
-    # assert response['result']['baseFeePerGas'] is not None
-    # assert response['result']['transactions'] is not None
-    # assert response['result']['withdrawalsRoot'] is not None
-    # assert response['result']['blobGasUsed'] is not None
-    # assert response['result']['excessBlobGas'] is not None
-    # assert response['result']['parentBeaconBlockRoot'] is not None
+    assert response['result']['author'] is not None
+    assert response['result']['difficulty'] is not None
+    assert response['result']['extraData'] is not None
+    assert response['result']['gasLimit'] is not None
+    assert response['result']['gasUsed'] is not None
+    assert response['result']['hash'] is not None
+    assert response['result']['logsBloom'] is not None
+    assert response['result']['miner'] is not None
+    assert response['result']['mixHash'] is not None
+    assert response['result']['nonce'] is not None
+    assert response['result']['number'] is not None
+    assert response['result']['parentHash'] is not None
+    assert response['result']['receiptsRoot'] is not None
+    assert response['result']['sha3Uncles'] is not None
+    assert response['result']['size'] is not None
+    assert response['result']['stateRoot'] is not None
+    assert response['result']['totalDifficulty'] is not None
+    assert response['result']['baseFeePerGas'] is not None
+    assert response['result']['transactions'] is not None
+    assert response['result']['withdrawalsRoot'] is not None
+    assert response['result']['blobGasUsed'] is not None
+    assert response['result']['excessBlobGas'] is not None
+    assert response['result']['parentBeaconBlockRoot'] is not None
 
 
 # Add more test cases as needed

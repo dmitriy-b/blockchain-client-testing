@@ -1,4 +1,4 @@
-name: Nethermind JSON-RPC Tests
+name: Blockchain JSON-RPC Tests
 
 on: [push, pull_request]
 
@@ -130,9 +130,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run verification tests
+      - name: Run verification scenario 1
         run: |
-          pytest tests/test_json_rpc.py
+          LOG_FILE_NAME=verification pytest tests/test_json_rpc.py
+      
+      - name: Run performance scenario 1
+        run: |
+          LOG_FILE_NAME=performance_1 pytest -k "test_performance_1"
+
+      - name: Run performance scenario 2
+        run: |
+          LOG_FILE_NAME=performance_1 pytest -k "test_performance_2"
 
       - name: Stop sedge
         if: always()
@@ -163,3 +171,10 @@ jobs:
         with:
           name: sedge-logs
           path: sedge.logs
+      
+      - name: Upload Locust pytest and locust reports
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-reports
+          path: reports/

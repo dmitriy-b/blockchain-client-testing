@@ -28,7 +28,7 @@ def configuration(request):
     load_dotenv()
     for k, v in os.environ.items():     
         for key in cfg[env].keys():
-            # to store variables like BASE_URL
+            # to store variables like GENERAL_BASE_URL
             if str(k).lower().startswith(f"{env}_"):
                 cfg[env][str(k).lower().replace(f"{env}_", "")] = v
             if str(k).lower() == str(key).lower():
