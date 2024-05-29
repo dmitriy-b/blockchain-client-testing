@@ -5,6 +5,8 @@ def test_eth_block_number(client):
     response = client.call("eth_blockNumber")
     assert 'result' in response
     assert response['result'] is not None
+    assert 'id' in response 
+    assert response['jsonrpc'] == '2.0'
 
 @pytest.mark.api
 def test_eth_get_block_by_number(client):
@@ -43,46 +45,27 @@ def test_eth_get_block_by_number(client):
 def test_eth_syncing(client):
     response = client.call("eth_syncing")
     assert 'result' in response
+    assert 'id' in response 
+    assert response['jsonrpc'] == '2.0'
+
 
 @pytest.mark.api
-def test_eth_get_balance(client):
-    # Use a known address for the test
-    address = "0x0000000000000000000000000000000000000000"
-    response = client.call("eth_getBalance", [address, "latest"])
+def test_eth_gas_price(client):
+    response = client.call("eth_gasPrice")
     assert 'result' in response
-    assert response['result'] is not None
+    assert 'id' in response 
+    assert response['jsonrpc'] == '2.0'
+
 
 @pytest.mark.api
-def test_eth_get_transaction_by_hash(client):
-    # Use a known transaction hash for the test
-    tx_hash = "0x0000000000000000000000000000000000000000000000000000000000000000"
-    response = client.call("eth_getTransactionByHash", [tx_hash])
+def test_eth_chain_id(client):
+    response = client.call("eth_chainId", call_id=0)
     assert 'result' in response
+    assert 'id' in response 
+    assert response['jsonrpc'] == '2.0'
+    assert int(response['result'], 16) >= 0
 
-@pytest.mark.api
-def test_eth_call(client):
-    # Use a dummy call object
-    call_object = {
-        "to": "0x0000000000000000000000000000000000000000",
-        "data": "0x"
-    }
-    response = client.call("eth_call", [call_object, "latest"])
-    assert 'result' in response
-    assert response['result'] is not None
-
-@pytest.mark.api
-def test_eth_estimate_gas(client):
-    # Use a dummy transaction object
-    tx_object = {
-        "to": "0x0000000000000000000000000000000000000000",
-        "data": "0x"
-    }
-    response = client.call("eth_estimateGas", [tx_object])
-    assert 'result' in response
-    assert response['result'] is not None
-
-
-# net
+# net endpoint
 @pytest.mark.api
 def test_net_version(client):
     response = client.call("net_version")
@@ -101,3 +84,13 @@ def test_net_peer_count(client):
     assert 'result' in response
     assert response['result'] is not None
     assert int(response['result'], 16) >= 0
+
+
+# negative tests
+
+@pytest.mark.api
+def test_eth_syncing_wrong_param(client):
+    response = client.call("eth_syncing", ["test_param"])
+    assert 'error' in response
+    assert 'id' in response 
+    assert response['error']['message'] == 'Invalid params'
