@@ -1,14 +1,13 @@
 import pytest
-from utils.json_rpc_client import JsonRpcClient
 
-client = JsonRpcClient("http://localhost:8545")
-
-def test_eth_block_number():
+@pytest.mark.api
+def test_eth_block_number(client):
     response = client.call("eth_blockNumber")
     assert 'result' in response
     assert response['result'] is not None
 
-def test_eth_get_block_by_number():
+@pytest.mark.api
+def test_eth_get_block_by_number(client):
     block_number = client.call("eth_blockNumber", call_id=1)['result']
     response = client.call("eth_getBlockByNumber", [block_number, True])
     assert 'result' in response
@@ -40,24 +39,28 @@ def test_eth_get_block_by_number():
 
 # Add more test cases as needed
 
-def test_eth_syncing():
+@pytest.mark.api
+def test_eth_syncing(client):
     response = client.call("eth_syncing")
     assert 'result' in response
 
-def test_eth_get_balance():
+@pytest.mark.api
+def test_eth_get_balance(client):
     # Use a known address for the test
     address = "0x0000000000000000000000000000000000000000"
     response = client.call("eth_getBalance", [address, "latest"])
     assert 'result' in response
     assert response['result'] is not None
 
-def test_eth_get_transaction_by_hash():
+@pytest.mark.api
+def test_eth_get_transaction_by_hash(client):
     # Use a known transaction hash for the test
     tx_hash = "0x0000000000000000000000000000000000000000000000000000000000000000"
     response = client.call("eth_getTransactionByHash", [tx_hash])
     assert 'result' in response
 
-def test_eth_call():
+@pytest.mark.api
+def test_eth_call(client):
     # Use a dummy call object
     call_object = {
         "to": "0x0000000000000000000000000000000000000000",
@@ -67,7 +70,8 @@ def test_eth_call():
     assert 'result' in response
     assert response['result'] is not None
 
-def test_eth_estimate_gas():
+@pytest.mark.api
+def test_eth_estimate_gas(client):
     # Use a dummy transaction object
     tx_object = {
         "to": "0x0000000000000000000000000000000000000000",
@@ -79,18 +83,20 @@ def test_eth_estimate_gas():
 
 
 # net
-
-def test_net_version():
+@pytest.mark.api
+def test_net_version(client):
     response = client.call("net_version")
     assert 'result' in response
     assert response['result'] is not None
 
-def test_net_listening():
+@pytest.mark.api
+def test_net_listening(client):
     response = client.call("net_listening")
     assert 'result' in response
     assert response['result'] in [True, False]
 
-def test_net_peer_count():
+@pytest.mark.api
+def test_net_peer_count(client):
     response = client.call("net_peerCount")
     assert 'result' in response
     assert response['result'] is not None
