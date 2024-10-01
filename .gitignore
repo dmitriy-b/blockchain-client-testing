@@ -170,3 +170,7 @@ reports/*.html
 reports/*.csv
 reports/*.json
 reports/assets
+
+# Add to existing .gitignore
+.dockerignore
+.DS_Store
