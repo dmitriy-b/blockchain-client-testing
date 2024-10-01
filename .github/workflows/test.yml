@@ -167,14 +167,14 @@ jobs:
 
       - name: Upload Sedge logs
         if: failure()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: sedge-logs
           path: sedge.logs
       
       - name: Upload Locust pytest and locust reports
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: test-reports
           path: reports/
