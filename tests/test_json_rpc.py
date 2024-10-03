@@ -1,4 +1,7 @@
 import pytest
+import time
+from eth_account import Account
+from web3 import Web3
 
 @pytest.mark.api
 def test_eth_block_number(client):
@@ -87,10 +90,200 @@ def test_net_peer_count(client):
 
 
 # negative tests
-
 @pytest.mark.api
 def test_eth_syncing_wrong_param(client):
     response = client.call("eth_syncing", ["test_param"])
     assert 'error' in response
     assert 'id' in response 
     assert response['error']['message'] == 'Invalid params'
+
+
+# Debug namespace tests
+@pytest.mark.api
+@pytest.mark.debug
+def test_debug_trace_transaction(client):
+    # First, get a transaction hash from a recent block
+    # block = client.call("eth_getBlockByNumber", ["latest", True])
+    tx_hash = "0x98cc3f1c88ebd953107b0f65d2424850ac0153f3a3ebb675c5c06951c5cc2f54"
+
+    response = client.call("debug_traceTransaction", [tx_hash])
+    assert 'result' in response
+    assert 'gas' in response['result']
+    assert 'returnValue' in response['result']
+    assert 'structLogs' in response['result']
+
+@pytest.mark.api
+@pytest.mark.debug
+def test_debug_trace_block_by_number(client):
+    block_number = client.call("eth_blockNumber")['result']
+    response = client.call("debug_traceBlockByNumber", [block_number, {"tracer": "callTracer"}])
+    assert 'result' in response
+    assert isinstance(response['result'], list)
+    if len(response['result']) > 0:
+        assert 'type' in response['result'][0]
+        assert 'from' in response['result'][0]
+        assert 'to' in response['result'][0]
+
+@pytest.mark.api
+@pytest.mark.debug
+def test_debug_trace_call(client):
+    # Example transaction call
+    tx_call = {
+        "from": "0x0000000000000000000000000000000000000001",
+        "to": "0x0000000000000000000000000000000000000002",
+        "gas": "0x5208",  # 21000
+        "gasPrice": "0x1",
+        "value": "0x1",
+        "data": "0x"
+    }
+    block_number = "latest"
+    
+    response = client.call("debug_traceCall", [tx_call, block_number, {"tracer": "callTracer"}])
+    assert 'result' in response
+    assert 'type' in response['result']
+    assert 'from' in response['result']
+    assert 'to' in response['result']
+
+@pytest.mark.api
+@pytest.mark.debug
+def test_debug_trace_block_by_hash(client):
+    # First, get the latest block hash
+    block = client.call("eth_getBlockByNumber", ["latest", False])
+    block_hash = block['result']['hash']
+
+    response = client.call("debug_traceBlockByHash", [block_hash, {"tracer": "callTracer"}])
+    assert 'result' in response
+    assert isinstance(response['result'], list)
+    if len(response['result']) > 0:
+        assert 'type' in response['result'][0]
+        assert 'from' in response['result'][0]
+        assert 'to' in response['result'][0]
+
+
+@pytest.mark.api
+@pytest.mark.debug
+def test_debug_trace_block_by_hash_with_options(client):
+    # First, get the latest block hash
+    block = client.call("eth_getBlockByNumber", ["latest", False])
+    block_hash = block['result']['hash']
+
+    # Define tracing options
+    options = {
+        "tracer": "callTracer",
+        "timeout": "10s",
+        "disableStorage": True,
+        "disableStack": True,
+        "enableMemory": False,
+        "enableReturnData": True
+    }
+
+    response = client.call("debug_traceBlockByHash", [block_hash, options])
+    assert 'result' in response
+    assert isinstance(response['result'], list)
+    if len(response['result']) > 0:
+        assert 'type' in response['result'][0]
+        assert 'from' in response['result'][0]
+        assert 'to' in response['result'][0]
+        assert 'input' in response['result'][0]
+        # Check for either 'output' or 'result' field
+        assert 'output' in response['result'][0] or 'result' in response['result'][0]
+        
+        # Additional checks to provide more information
+        print(f"Response keys: {response['result'][0].keys()}")
+        if 'output' not in response['result'][0]:
+            print("'output' field not found. Available fields:")
+            for key in response['result'][0]:
+                print(f"- {key}: {response['result'][0][key]}")
+
+@pytest.mark.api
+@pytest.mark.debug
+def test_debug_trace_transaction_with_custom_tracer(client, ensure_transaction):
+    # tx_hash = ensure_transaction()
+    tx_hash = "0x98cc3f1c88ebd953107b0f65d2424850ac0153f3a3ebb675c5c06951c5cc2f54"
+
+    # Define a custom JavaScript tracer
+    custom_tracer = """
+    {
+        step: function(log, db) { },
+        fault: function(log, db) { },
+        result: function(ctx, db) {
+            return {
+                gasUsed: ctx.gasUsed,
+                returnValue: ctx.returnValue
+            }
+        }
+    }
+    """
+
+    response = client.call("debug_traceTransaction", [tx_hash, {"tracer": custom_tracer}])
+    assert 'result' in response
+    assert 'gasUsed' in response['result']
+    assert 'returnValue' in response['result']
+
+    # Print additional information for debugging
+    print(f"Transaction hash: {tx_hash}")
+    print(f"Response: {response}")
+
+@pytest.mark.api
+@pytest.mark.debug
+def test_debug_trace_call_with_state_overrides(client):
+    # Example transaction call
+    tx_call = {
+        "from": "0x0000000000000000000000000000000000000001",
+        "to": "0x0000000000000000000000000000000000000002",
+        "gas": "0x5208",  # 21000
+        "gasPrice": "0x1",
+        "value": "0x1",
+        "data": "0x"
+    }
+    block_number = "latest"
+    
+    # State overrides
+    state_overrides = {
+        "0x0000000000000000000000000000000000000002": {
+            "balance": "0x1000000000000000000"
+        }
+    }
+    
+    response = client.call("debug_traceCall", [tx_call, block_number, {"tracer": "callTracer", "stateOverrides": state_overrides}])
+    assert 'result' in response
+    assert 'type' in response['result']
+    assert 'from' in response['result']
+    assert 'to' in response['result']
+    assert 'value' in response['result']
+    assert response['result']['value'] == '0x1'
+
+@pytest.mark.api
+@pytest.mark.debug
+def test_debug_trace_block_by_number_with_tracer_config(client):
+    block_number = client.call("eth_blockNumber")['result']
+    tracer_config = {
+        "onlyTopCall": True,
+        "withLog": True
+    }
+    response = client.call("debug_traceBlockByNumber", [block_number, {"tracer": "callTracer", "tracerConfig": tracer_config}])
+    assert 'result' in response
+    assert isinstance(response['result'], list)
+    if len(response['result']) > 0:
+        assert 'type' in response['result'][0]
+        assert 'from' in response['result'][0]
+        assert 'to' in response['result'][0]
+        assert 'calls' not in response['result'][0]  # Ensure only top-level call is returned
+
+@pytest.mark.api
+def test_get_balance(client):
+    # Address to check balance
+    address = '0xb3084539f554264aae4ebdb6250dec190e8aaffb'  # Example address (Ethereum Foundation)
+    
+    # Get balance using eth_getBalance
+    balance_wei = client.call("eth_getBalance", [address, "latest"])['result']
+    print(f"Balance of {address}: {balance_wei} Wei")
+
+    
+    # Convert balance from Wei to Ether
+    balance_eth = float(Web3.from_wei(Web3.to_int(hexstr=balance_wei), 'ether'))
+    print(f"Balance of {address}: {balance_eth} ETH")
+        
+    # Assertions
+    assert Web3.to_int(hexstr=balance_wei) >= 0, "Balance should be non-negative"
+    assert isinstance(balance_eth, float), "Balance in ETH should be a float"
