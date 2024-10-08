@@ -103,8 +103,9 @@ def test_eth_syncing_wrong_param(client):
 @pytest.mark.debug
 def test_debug_trace_transaction(client):
     # First, get a transaction hash from a recent block
-    # block = client.call("eth_getBlockByNumber", ["latest", True])
-    tx_hash = "0x98cc3f1c88ebd953107b0f65d2424850ac0153f3a3ebb675c5c06951c5cc2f54"
+    block = client.call("eth_getBlockByNumber", ["latest", True])
+    tx_hash = block['result']['transactions'][0]['hash']
+    # tx_hash = "0x98cc3f1c88ebd953107b0f65d2424850ac0153f3a3ebb675c5c06951c5cc2f54"
 
     response = client.call("debug_traceTransaction", [tx_hash])
     assert 'result' in response
@@ -198,8 +199,12 @@ def test_debug_trace_block_by_hash_with_options(client):
 @pytest.mark.api
 @pytest.mark.debug
 def test_debug_trace_transaction_with_custom_tracer(client, ensure_transaction):
-    # tx_hash = ensure_transaction()
-    tx_hash = "0x98cc3f1c88ebd953107b0f65d2424850ac0153f3a3ebb675c5c06951c5cc2f54"
+    tx_hash = ensure_transaction()
+    block = client.call("eth_getBlockByNumber", ["latest", True])
+    while len(block['result']['transactions']) == 0:
+        time.sleep(1)
+        block = client.call("eth_getBlockByNumber", ["latest", True])
+    tx_hash = block['result']['transactions'][0]['hash']
 
     # Define a custom JavaScript tracer
     custom_tracer = """
