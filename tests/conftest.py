@@ -72,11 +72,11 @@ def generate_ethereum_account():
 
 
 @pytest.fixture(scope="session")
-def web3_client(configuration):
+def web3_client(configuration) -> Web3:
     return Web3(Web3.HTTPProvider(configuration["base_url"]))
 
 @pytest.fixture(scope="module")
-def ensure_transaction(web3_client, client, configuration):
+def ensure_transaction(web3_client: Web3, client: JsonRpcClient, configuration):
     def _ensure_transaction():
         # Use the first account from the node as the funding account
         funding_account_address = configuration["public_key"]
@@ -105,7 +105,7 @@ def ensure_transaction(web3_client, client, configuration):
 
         # Send the signed funding transaction
         funding_tx_hash = web3_client.eth.send_raw_transaction(signed_funding_tx.raw_transaction)
-        web3_client.eth.wait_for_transaction_receipt(funding_tx_hash)
+        web3_client.eth.wait_for_transaction_receipt(funding_tx_hash, timeout=int(configuration["transaction_timeout"]))
 
         # Create the main transaction
         transaction = {
