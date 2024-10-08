@@ -75,7 +75,7 @@ def generate_ethereum_account():
 def web3_client(configuration) -> Web3:
     return Web3(Web3.HTTPProvider(configuration["base_url"]))
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def ensure_transaction(web3_client: Web3, client: JsonRpcClient, configuration):
     def _ensure_transaction():
         # Use the first account from the node as the funding account
