@@ -3,6 +3,17 @@ import time
 from eth_account import Account
 from web3 import Web3
 
+
+def create_transaction_if_not_exist(client, ensure_transaction):
+    block = client.call("eth_getBlockByNumber", ["latest", True])
+    if len(block['result']['transactions']) == 0:
+        ensure_transaction()
+    block = client.call("eth_getBlockByNumber", ["latest", True])
+    while len(block['result']['transactions']) == 0:
+        time.sleep(5)
+        block = client.call("eth_getBlockByNumber", ["latest", True])
+    return block['result']
+
 @pytest.mark.api
 def test_eth_block_number(client):
     response = client.call("eth_blockNumber")
@@ -103,13 +114,13 @@ def test_eth_syncing_wrong_param(client):
 @pytest.mark.debug
 def test_debug_trace_transaction(client, ensure_transaction):
     # First, get a transaction hash from a recent block
-    tx_hash = ensure_transaction()
-    block = client.call("eth_getBlockByNumber", ["latest", True])
-    while len(block['result']['transactions']) == 0:
-        time.sleep(5)
-        block = client.call("eth_getBlockByNumber", ["latest", True])
+    # tx_hash = ensure_transaction()
+    # block = client.call("eth_getBlockByNumber", ["latest", True])
+    # while len(block['result']['transactions']) == 0:
+    #     time.sleep(5)
+    #     block = client.call("eth_getBlockByNumber", ["latest", True])
   
-    tx_hash = block['result']['transactions'][0]['hash']
+    tx_hash = create_transaction_if_not_exist(client, ensure_transaction)['transactions'][0]['hash']
     response = client.call("debug_traceTransaction", [tx_hash])
     assert 'result' in response
     assert 'gas' in response['result']
@@ -168,12 +179,12 @@ def test_debug_trace_block_by_hash(client):
 @pytest.mark.debug
 def test_debug_trace_block_by_hash_with_options(client, ensure_transaction):
     # First, get the latest block hash
-    tx_hash = ensure_transaction()
-    block = client.call("eth_getBlockByNumber", ["latest", True])
-    while len(block['result']['transactions']) == 0:
-        time.sleep(5)
-        block = client.call("eth_getBlockByNumber", ["latest", True])
-    block_hash = block['result']['hash']
+    # tx_hash = ensure_transaction()
+    # block = client.call("eth_getBlockByNumber", ["latest", True])
+    # while len(block['result']['transactions']) == 0:
+    #     time.sleep(5)
+    #     block = client.call("eth_getBlockByNumber", ["latest", True])
+    block_hash = create_transaction_if_not_exist(client, ensure_transaction)['hash']
 
     # Define tracing options
     options = {
@@ -206,12 +217,12 @@ def test_debug_trace_block_by_hash_with_options(client, ensure_transaction):
 @pytest.mark.api
 @pytest.mark.debug
 def test_debug_trace_transaction_with_custom_tracer(client, ensure_transaction):
-    tx_hash = ensure_transaction()
-    block = client.call("eth_getBlockByNumber", ["latest", True])
-    while len(block['result']['transactions']) == 0:
-        time.sleep(5)
-        block = client.call("eth_getBlockByNumber", ["latest", True])
-    tx_hash = block['result']['transactions'][0]['hash']
+    # tx_hash = ensure_transaction()
+    # block = client.call("eth_getBlockByNumber", ["latest", True])
+    # while len(block['result']['transactions']) == 0:
+    #     time.sleep(5)
+    #     block = client.call("eth_getBlockByNumber", ["latest", True])
+    tx_hash = create_transaction_if_not_exist(client, ensure_transaction)['transactions'][0]['hash']
 
     # Define a custom JavaScript tracer
     custom_tracer = """
