@@ -38,7 +38,7 @@ class BlockChainUser(HttpUser):
                 response.failure("Failed to get block by number: " + block_number)
 
 def run_locust(configuration, client, number_of_users=100, spawn_rate=10, test_duration=60, scenario_name="locust"):
-    
+
     wait_start = float(configuration['wait_start'])
     wait_end = float(configuration['wait_end'])
 

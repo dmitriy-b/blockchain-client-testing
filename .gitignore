@@ -174,3 +174,4 @@ reports/assets
 # Add to existing .gitignore
 .dockerignore
 .DS_Store
+.lh/*

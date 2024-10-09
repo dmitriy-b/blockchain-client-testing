@@ -29,14 +29,14 @@ def configuration(request):
         cfg[env][k] = v
     # read from .env file
     load_dotenv()
-    for k, v in os.environ.items():     
+    for k, v in os.environ.items():
         for key in cfg[env].keys():
             # to store variables like GENERAL_BASE_URL
             if str(k).lower().startswith(f"{env}_"):
                 cfg[env][str(k).lower().replace(f"{env}_", "")] = v
             if str(k).lower() == str(key).lower():
                 cfg[env][str(k).lower()] = v
-    # manky patching to pass config to teardown step    
+    # manky patching to pass config to teardown step
     request.config.configuration = cfg[env]
     request.config.env_name = env
     cfg[env]["env_name"] = env
@@ -116,13 +116,10 @@ def ensure_transaction(web3_client: Web3, client: JsonRpcClient, configuration):
             'nonce': web3_client.eth.get_transaction_count(account.address),
             'chainId': web3_client.eth.chain_id,
         }
-        
         # Sign the main transaction
         signed_txn = account.sign_transaction(transaction)
-        
         # Send the pre-signed transaction
         tx_hash = web3_client.eth.send_raw_transaction(signed_txn.raw_transaction)
-        
         return tx_hash.hex()
 
     return _ensure_transaction
