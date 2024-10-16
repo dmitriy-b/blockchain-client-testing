@@ -1,6 +1,16 @@
 name: Blockchain JSON-RPC Tests
 
-on: [push, pull_request]
+on:
+  schedule:
+    - cron: '0 12 * * *'  # Run every day at 12:00 UTC
+  workflow_dispatch:
+    inputs:
+      client_tag:
+        description: "Client tag to run tests on"
+        required: true
+        default: "master"
+  push:
+  pull_request:
 
 jobs:
   setup-and-test:
@@ -63,7 +73,7 @@ jobs:
           sedge generate --logging none -p $HOME full-node \
           --map-all --no-mev-boost --no-validator \
           --network chiado -c lighthouse:sigp/lighthouse:latest \
-          -e nethermind:nethermindeth/nethermind:master \
+          -e nethermind:nethermindeth/nethermind:${{ github.event.inputs.client_tag }} \
           --el-extra-flag Sync.NonValidatorNode=true \
           --el-extra-flag Sync.DownloadBodiesInFastSync=false \
           --el-extra-flag Sync.DownloadReceiptsInFastSync=false \
