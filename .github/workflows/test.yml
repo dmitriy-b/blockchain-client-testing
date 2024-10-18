@@ -73,7 +73,7 @@ jobs:
           sedge generate --logging none -p $HOME full-node \
           --map-all --no-mev-boost --no-validator \
           --network chiado -c lighthouse:sigp/lighthouse:latest \
-          -e nethermind:nethermindeth/nethermind:${{ github.event.inputs.client_tag }} \
+          -e nethermind:nethermindeth/nethermind:${{ github.event.inputs.client_tag || 'master' }} \
           --el-extra-flag Sync.NonValidatorNode=true \
           --el-extra-flag Sync.DownloadBodiesInFastSync=false \
           --el-extra-flag Sync.DownloadReceiptsInFastSync=false \
