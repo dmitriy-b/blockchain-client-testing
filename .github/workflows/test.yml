@@ -15,7 +15,7 @@ on:
 jobs:
   setup-and-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 120
 
     steps:
       - name: Checkout code
@@ -99,7 +99,7 @@ jobs:
         run: sedge run -p . >> sedge.logs &
 
       - name: Wait for Nethermind synchronization complete
-        timeout-minutes: 240
+        timeout-minutes: 120
         run: |
           echo "Waiting for Nethermind to synchronize..."
           while true; do
