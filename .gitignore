@@ -175,3 +175,4 @@ reports/assets
 .dockerignore
 .DS_Store
 .lh/*
+.history/*
