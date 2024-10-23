@@ -125,7 +125,7 @@ jobs:
               "params": []
             }')
             echo "Response: $response"
-            if echo "$response" | grep -q '"currentStage":"WaitingForBlock"' || echo "$response" | grep -q '"currentStage":"Full"' || echo "$response" | grep -q '"currentStage":"StateNodes"'; then
+            if echo "$response" | grep -q '"currentStage":"WaitingForBlock"'; then
               echo "Synchronization completed."
               break
             fi
