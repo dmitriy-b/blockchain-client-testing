@@ -121,11 +121,11 @@ jobs:
             response=$(curl -s localhost:8545 -X POST -H "Content-Type: application/json" --data '{
               "jsonrpc": "2.0",
               "id": 0,
-              "method": "debug_getSyncStage",
+              "method": "eth_syncing",
               "params": []
             }')
             echo "Response: $response"
-            if echo "$response" | grep -q '"currentStage":"WaitingForBlock"'; then
+            if echo "$response" | grep -q "false"; then
               echo "Synchronization completed."
               break
             fi
