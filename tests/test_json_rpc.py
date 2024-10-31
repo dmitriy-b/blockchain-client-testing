@@ -2,6 +2,7 @@ import pytest
 import time
 from eth_account import Account
 from web3 import Web3
+import json
 
 
 def create_transaction_if_not_exist(client, ensure_transaction):
@@ -100,6 +101,20 @@ def test_net_peer_count(client):
     assert int(response['result'], 16) >= 0
 
 
+@pytest.mark.debug
+@pytest.mark.api
+def test_get_raw_receipts(client):
+    response = client.call("debug_getRawReceipts", ["0x0"])
+    assert 'result' in response
+    assert response['result'] is not None
+
+
+@pytest.mark.debug
+@pytest.mark.api
+def test_get_raw_block(client):
+    response = client.call("debug_getRawBlock", ["0x0"])
+    assert 'result' in response
+    assert response['result'] is not None
 # negative tests
 @pytest.mark.api
 def test_eth_syncing_wrong_param(client):
