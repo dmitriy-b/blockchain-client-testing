@@ -9,11 +9,25 @@ import configparser
 
 import pytest
 import secrets
+from utils.slack_report import send_to_slack
 
 def pytest_addoption(parser):
     parser.addoption("--env", action="store", default="general",
         help="Environment to run tests against")
 
+def pytest_unconfigure(config):
+    try:
+        ini_config = config.configuration 
+        if bool(int(ini_config.get("send_slack_webhook"))):
+            send_to_slack(
+                webhook_url=ini_config.get("slack_webhook_link"), 
+                description=f"Report of {config.getoption('-m').upper()} for {config.env_name.upper()}", 
+                post_only_failed=bool(ini_config.get("slack_notify_only_failed")), 
+                job_url=ini_config.get("ci_job_url"),
+                report_name=ini_config.get("json_report"))
+
+    except AttributeError:
+        print("Make sure to use configuration fixture")
 
 @pytest.fixture(scope="session")
 def configuration(request):
