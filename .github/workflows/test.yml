@@ -140,12 +140,14 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run verification scenario 1
+        env:
+          CHIADO_SLACK_WEBHOOK_LINK: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
-          pytest tests/test_json_rpc.py --html=reports/integration_tests.html
+          pytest tests/test_json_rpc.py --env=chiado --html=reports/integration_tests.html
 
       - name: Run performance scenario 1
         run: |
-          LOG_STDOUT_LEVEL=ERROR pytest -k "test_performance_1"
+          LOG_STDOUT_LEVEL=ERROR pytest --env=chiado  -k "test_performance_1"
 
       - name: Stop sedge
         if: always()
