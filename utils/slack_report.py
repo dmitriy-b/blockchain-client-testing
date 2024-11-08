@@ -12,7 +12,7 @@ import slackweb
 REPORTS_DIR = "reports"
 DEFAULT_VERDICT = "pass"
 DEFAULT_DESCRIPTION = "Auto tests"
-ARTIFACTS_DOWNLOAD_PATH = "artifacts/download"
+ARTIFACTS_DOWNLOAD_PATH = "#artifacts"
 SLACK_COLORS = {
     "pass": "good",
     "fail": "warning"
@@ -155,7 +155,7 @@ def send_to_slack(
             "fields": attachment_fields,
             "footer": footer_text,
         }]
-        
+        logging.info(f"Sending attachments: {attachments}")
         slack.notify(attachments=attachments)
     else:
         logging.warning("Skipped sending report to slack")

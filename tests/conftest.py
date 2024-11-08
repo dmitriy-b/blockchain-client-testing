@@ -21,7 +21,7 @@ def pytest_unconfigure(config):
         if bool(int(ini_config.get("send_slack_webhook"))):
             send_to_slack(
                 webhook_url=ini_config.get("slack_webhook_link"), 
-                description=f"Report of {config.getoption('-m').upper()} for {config.env_name.upper()}", 
+                description=f"Daily run for {config.env_name.upper()} network", 
                 post_only_failed=bool(ini_config.get("slack_notify_only_failed")), 
                 job_url=ini_config.get("ci_job_url"),
                 report_name=ini_config.get("json_report"))
@@ -34,13 +34,15 @@ def configuration(request):
     env = request.config.getoption("--env")
     cfg = configparser.ConfigParser()
     cfg.read("pytest.ini")
+    logger.info(f"Environment: {env}")
     if env not in cfg:
         # workaround for running tests inside docker
         cfg.read("../pytest.ini")
         if env not in cfg:
             raise ValueError(f"Invalid environment: {env}")
     for k, v in cfg["general"].items():
-        cfg[env][k] = v
+        if k not in cfg[env]:
+            cfg[env][k] = v
     # read from .env file
     load_dotenv()
     for k, v in os.environ.items():
@@ -59,6 +61,7 @@ def configuration(request):
     logger.add(sys.stdout, level=cfg[env]['log_stdout_level'])
     logger.add(f"reports/{cfg[env]['log_file_name']}.log", level=cfg[env]['log_file_level'])
     logger.debug("Updated configuration ...")
+    logger.debug(f"Base URL: {cfg[env]['base_url']}")
     return cfg[env]
 
 @pytest.fixture(scope="session")
