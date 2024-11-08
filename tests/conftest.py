@@ -19,10 +19,11 @@ def pytest_unconfigure(config):
     try:
         ini_config = config.configuration 
         if bool(int(ini_config.get("send_slack_webhook"))):
+            logger.info(f"slack_notify_only_failed: {bool(int(ini_config.get('slack_notify_only_failed')))}")
             send_to_slack(
                 webhook_url=ini_config.get("slack_webhook_link"), 
                 description=f"Daily run for {config.env_name.upper()} network", 
-                post_only_failed=bool(ini_config.get("slack_notify_only_failed")), 
+                post_only_failed=bool(int(ini_config.get("slack_notify_only_failed"))), 
                 job_url=ini_config.get("ci_job_url"),
                 report_name=ini_config.get("json_report"))
 

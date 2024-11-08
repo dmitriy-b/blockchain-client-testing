@@ -143,6 +143,7 @@ jobs:
         env:
           CHIADO_SLACK_WEBHOOK_LINK: ${{ secrets.SLACK_WEBHOOK_URL }}
           CHIADO_CI_JOB_URL: ${{ github.server_url }}/actions/runs/${{ github.run_id }}/job/${{ github.job_id }}
+          CHIADO_SLACK_NOTIFY_ONLY_FAILED: 0
         run: |
           pytest tests/test_json_rpc.py --env=chiado --html=reports/integration_tests.html
 
