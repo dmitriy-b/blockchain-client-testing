@@ -2,18 +2,9 @@ import pytest
 import time
 from eth_account import Account
 from web3 import Web3
-import json
 
+from tests.conftest import create_transaction_if_not_exist
 
-def create_transaction_if_not_exist(client, ensure_transaction):
-    block = client.call("eth_getBlockByNumber", ["latest", True])
-    if len(block['result']['transactions']) == 0:
-        ensure_transaction()
-    block = client.call("eth_getBlockByNumber", ["latest", True])
-    while len(block['result']['transactions']) == 0:
-        time.sleep(5)
-        block = client.call("eth_getBlockByNumber", ["latest", True])
-    return block['result']
 
 @pytest.mark.api
 def test_eth_block_number(client):
