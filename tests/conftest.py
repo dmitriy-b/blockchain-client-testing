@@ -4,12 +4,22 @@ from dotenv import load_dotenv
 from utils.json_rpc_client import JsonRpcClient
 from eth_account import Account
 from web3 import Web3
-
+import time
 import configparser
 
 import pytest
 import secrets
 from utils.slack_report import send_to_slack
+
+def create_transaction_if_not_exist(client, ensure_transaction):
+    block = client.call("eth_getBlockByNumber", ["latest", True])
+    if len(block['result']['transactions']) == 0:
+        ensure_transaction()
+    block = client.call("eth_getBlockByNumber", ["latest", True])
+    while len(block['result']['transactions']) == 0:
+        time.sleep(5)
+        block = client.call("eth_getBlockByNumber", ["latest", True])
+    return block['result']
 
 def pytest_addoption(parser):
     parser.addoption("--env", action="store", default="general",
@@ -141,3 +151,11 @@ def ensure_transaction(web3_client: Web3, client: JsonRpcClient, configuration):
         return tx_hash.hex()
 
     return _ensure_transaction
+
+
+@pytest.fixture(scope="function")
+def run_with_network(request, configuration):
+    marker = request.node.get_closest_marker("run_with_network")
+    logger.info("Test requires network: " + str(marker.kwargs["network"]))
+    if configuration["env_name"] not in marker.kwargs["network"]:
+        pytest.skip(f"Skipping test for {configuration['env_name']} network. The test is designed to run only for {marker.kwargs['network']} networks")
