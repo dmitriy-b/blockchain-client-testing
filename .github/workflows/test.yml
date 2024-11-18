@@ -142,7 +142,7 @@ jobs:
       - name: Run verification scenario 1
         env:
           CHIADO_SLACK_WEBHOOK_LINK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          CHIADO_CI_JOB_URL: ${{ github.server_url }}/actions/runs/${{ github.run_id }}/job/${{ github.job_id }}
+          CHIADO_CI_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           CHIADO_SLACK_NOTIFY_ONLY_FAILED: 0
         run: |
           pytest -m api --env=chiado --html=reports/integration_tests.html
@@ -150,7 +150,7 @@ jobs:
       - name: Run performance scenario 1
         env:
           CHIADO_SLACK_WEBHOOK_LINK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          CHIADO_CI_JOB_URL: ${{ github.server_url }}/actions/runs/${{ github.run_id }}/job/${{ github.job_id }}
+          CHIADO_CI_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           CHIADO_SLACK_NOTIFY_ONLY_FAILED: 1
         run: |
           LOG_STDOUT_LEVEL=ERROR pytest --env=chiado  -k "test_performance_1"
