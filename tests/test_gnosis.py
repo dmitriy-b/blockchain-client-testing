@@ -24,11 +24,20 @@ def test_gnosis_fee_collector(client, ensure_transaction, run_with_network):
     block = client.call("eth_getBlockByNumber", ["latest", True])
     assert len(block['result']['transactions']) > 0, "Block should have transactions"
 
-    # Needs to wait for fee collector smart contract execution
-    time.sleep(60)
+    # Poll for balance change with timeout
+    timeout = 120  # 2 minutes timeout
+    start_time = time.time()
+    while True:
+        balance_wei_updated = client.call("eth_getBalance", [fee_collector_address, "latest"])['result']
+        balance_eth_updated = float(Web3.from_wei(Web3.to_int(hexstr=balance_wei_updated), 'ether'))
+        transaction_count_updated = client.call("eth_getTransactionCount", [fee_collector_address])['result']
+        
+        if balance_eth_updated > balance_eth:
+            break
+            
+        if time.time() - start_time > timeout:
+            pytest.fail(f"Timeout waiting for balance to increase. Initial: {balance_eth}, Current: {balance_eth_updated}")
+            
+        time.sleep(5)  # Poll every 5 seconds
 
-    balance_wei_updated = client.call("eth_getBalance", [fee_collector_address, "latest"])['result']
-    balance_eth_updated = float(Web3.from_wei(Web3.to_int(hexstr=balance_wei_updated), 'ether'))
-    transaction_count_updated = client.call("eth_getTransactionCount", [fee_collector_address])['result']
-    assert balance_eth_updated > balance_eth, "Balance should be increased"
     assert transaction_count_updated == transaction_count, "There should be no new transactions for fee collector"
