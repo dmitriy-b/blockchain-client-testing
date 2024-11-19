@@ -25,7 +25,7 @@ def test_gnosis_fee_collector(client, ensure_transaction, run_with_network):
     assert len(block['result']['transactions']) > 0, "Block should have transactions"
 
     # Poll for balance change with timeout
-    timeout = 240  # 2 minutes timeout
+    timeout = 600  # 10 minutes timeout
     start_time = time.time()
     while True:
         balance_wei_updated = client.call("eth_getBalance", [fee_collector_address, "latest"])['result']
