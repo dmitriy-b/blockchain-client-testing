@@ -23,6 +23,9 @@ def test_gnosis_fee_collector(client, ensure_transaction, run_with_network):
     create_transaction_if_not_exist(client, ensure_transaction)
     block = client.call("eth_getBlockByNumber", ["latest", True])
     assert len(block['result']['transactions']) > 0, "Block should have transactions"
+    balance_wei_updated = client.call("eth_getBalance", [fee_collector_address, block['result']['number']])['result']
+    balance_eth_updated = float(Web3.from_wei(Web3.to_int(hexstr=balance_wei_updated), 'ether'))
+    logger.info(f"Balance of {fee_collector_address} in block {block['result']['number']}: {balance_eth_updated} ETH")
 
     # Poll for balance change with timeout
     timeout = 900  # 15 minutes timeout
