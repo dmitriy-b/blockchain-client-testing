@@ -7,7 +7,7 @@ from tests.conftest import create_transaction_if_not_exist, run_with_network
 
 @pytest.mark.api
 @pytest.mark.run_with_network(network=["chiado", "gnosis"])
-def test_gnosis_fee_collector(client, ensure_transaction, run_with_network):
+def test_gnosis_fee_collector(client, ensure_transaction, run_with_network, configuration):
     fee_collector_address = "0x1559000000000000000000000000000000000000"
     # Get balance using eth_getBalance
     balance_wei = client.call("eth_getBalance", [fee_collector_address, "latest"])['result']
@@ -28,7 +28,7 @@ def test_gnosis_fee_collector(client, ensure_transaction, run_with_network):
     logger.info(f"Balance of {fee_collector_address} in block {block['result']['number']}: {balance_eth_updated} ETH")
 
     # Poll for balance change with timeout
-    timeout = 900  # 15 minutes timeout
+    timeout = int(configuration["block_creation_timeout"])  # 15 minutes timeout
     start_time = time.time()
     while True:
         balance_wei_updated = client.call("eth_getBalance", [fee_collector_address, "latest"])['result']
