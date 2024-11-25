@@ -26,7 +26,7 @@ def test_gnosis_fee_collector(client, ensure_transaction, run_with_network, conf
     balance_wei_updated = client.call("eth_getBalance", [fee_collector_address, block['result']['number']])['result']
     balance_eth_updated = float(Web3.from_wei(Web3.to_int(hexstr=balance_wei_updated), 'ether'))
     logger.info(f"Balance of {fee_collector_address} in block {block['result']['number']}: {balance_eth_updated} ETH")
-
+    client.call("eth_syncing")
     # Poll for balance change with timeout
     timeout = int(configuration["block_creation_timeout"])  # 15 minutes timeout
     start_time = time.time()
@@ -42,5 +42,4 @@ def test_gnosis_fee_collector(client, ensure_transaction, run_with_network, conf
             pytest.fail(f"Timeout waiting for balance to increase. Initial: {balance_eth}, Current: {balance_eth_updated}")
             
         time.sleep(5)  # Poll every 5 seconds
-
     assert transaction_count_updated == transaction_count, "There should be no new transactions for fee collector"
