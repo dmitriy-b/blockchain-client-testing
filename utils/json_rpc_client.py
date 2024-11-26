@@ -1,9 +1,11 @@
 import requests
 from loguru import logger
+from web3 import Web3
 
 class JsonRpcClient:
     def __init__(self, url):
         self.url = url
+        self.web3: Web3 = Web3(Web3.HTTPProvider(url)) # type: ignore
 
     def call(self, method, params=None, call_id=1):
         payload = {

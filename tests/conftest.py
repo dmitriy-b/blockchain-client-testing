@@ -12,13 +12,15 @@ import secrets
 from utils.slack_report import send_to_slack
 
 def create_transaction_if_not_exist(client, ensure_transaction):
-    block = client.call("eth_getBlockByNumber", ["latest", True])
+    hash = ["latest", True]
+    block = client.call("eth_getBlockByNumber", hash)
     if len(block['result']['transactions']) == 0:
-        ensure_transaction()
-    block = client.call("eth_getBlockByNumber", ["latest", True])
-    while len(block['result']['transactions']) == 0:
+        tr = ensure_transaction()
+        hash = [tr, True]
+        block = client.call("eth_getBlockByHash", hash)
+    while block['result'] is None or len(block['result']['transactions']) == 0:
         time.sleep(5)
-        block = client.call("eth_getBlockByNumber", ["latest", True])
+        block = client.call("eth_getBlockByHash", hash)
     return block['result']
 
 def pytest_addoption(parser):
@@ -76,8 +78,9 @@ def configuration(request):
     return cfg[env]
 
 @pytest.fixture(scope="session")
-def client(configuration):
-    return JsonRpcClient(configuration["base_url"])
+def client(configuration) -> JsonRpcClient:
+    cl = JsonRpcClient(configuration["base_url"])
+    return cl
 
 
 def generate_ethereum_account():
@@ -100,12 +103,9 @@ def generate_ethereum_account():
 
 
 @pytest.fixture(scope="session")
-def web3_client(configuration) -> Web3:
-    return Web3(Web3.HTTPProvider(configuration["base_url"]))
-
-@pytest.fixture(scope="session")
-def ensure_transaction(web3_client: Web3, client: JsonRpcClient, configuration):
+def ensure_transaction(client: JsonRpcClient, configuration):
     def _ensure_transaction():
+        web3_client: Web3 = client.web3 # type: ignore
         # Use the first account from the node as the funding account
         funding_account_address = configuration["public_key"]
         funding_balance = web3_client.eth.get_balance(funding_account_address)
@@ -147,8 +147,15 @@ def ensure_transaction(web3_client: Web3, client: JsonRpcClient, configuration):
         # Sign the main transaction
         signed_txn = account.sign_transaction(transaction)
         # Send the pre-signed transaction
-        tx_hash = web3_client.eth.send_raw_transaction(signed_txn.raw_transaction)
-        return tx_hash.hex()
+        tx_hash = client.call("eth_sendRawTransaction", [signed_txn.raw_transaction.hex()])['result']
+        # tx_hash = web3_client.eth.send_raw_transaction(signed_txn.raw_transaction)
+        logger.info(f"Transaction hash: {tx_hash}")
+        receipt = client.call("eth_getTransactionReceipt", [tx_hash])
+        logger.info(f"Transaction receipt: {receipt}")
+        while receipt['result'] is None:
+            time.sleep(5)
+            receipt = client.call("eth_getTransactionReceipt", [tx_hash])
+        return receipt['result']['blockHash']
 
     return _ensure_transaction
 
