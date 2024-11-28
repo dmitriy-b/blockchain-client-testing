@@ -11,7 +11,7 @@ from web3 import Web3
 
 
 @pytest.mark.api
-@pytest.mark.run_with_network(network=["chiado", "gnosis"])
+@pytest.mark.run_with_network(network=["chiado", "gnosis", "pectra-devnet"])
 def test_gnosis_fee_collector(client, ensure_transaction, run_with_network, configuration):
 
     web3 = Web3(Web3.HTTPProvider(configuration["base_url"]))

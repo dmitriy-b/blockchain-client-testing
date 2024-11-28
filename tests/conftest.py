@@ -82,7 +82,7 @@ def client(configuration) -> JsonRpcClient:
     cl = JsonRpcClient(configuration["base_url"])
     return cl
 
-
+@pytest.fixture(scope="session")
 def generate_ethereum_account():
     # Generate a random private key
     private_key = "0x" + secrets.token_hex(32)
