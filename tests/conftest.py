@@ -103,8 +103,8 @@ def generate_ethereum_account():
 
 
 @pytest.fixture(scope="session")
-def ensure_transaction(client: JsonRpcClient, configuration):
-    def _ensure_transaction():
+def create_transaction(client: JsonRpcClient, configuration):
+    def _create_transaction():
         web3_client: Web3 = client.web3 # type: ignore
         # Use the first account from the node as the funding account
         funding_account_address = configuration["public_key"]
@@ -150,6 +150,14 @@ def ensure_transaction(client: JsonRpcClient, configuration):
         tx_hash = client.call("eth_sendRawTransaction", [signed_txn.raw_transaction.hex()])['result']
         # tx_hash = web3_client.eth.send_raw_transaction(signed_txn.raw_transaction)
         logger.info(f"Transaction hash: {tx_hash}")
+        return tx_hash
+
+    return _create_transaction
+
+@pytest.fixture(scope="session")
+def ensure_transaction(client: JsonRpcClient, configuration, create_transaction):
+    def _ensure_transaction():
+        tx_hash = create_transaction()
         receipt = client.call("eth_getTransactionReceipt", [tx_hash])
         logger.info(f"Transaction receipt: {receipt}")
         while receipt['result'] is None:
