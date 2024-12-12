@@ -5,6 +5,29 @@ from eth_account import Account
 from web3 import Web3
 import time
 
+def wait_for_empty_pool(client, timeout=30, interval=1):
+    """Wait until transaction pool is empty."""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        response = client.call("txpool_status", [])
+        if 'result' not in response:
+            time.sleep(interval)
+            continue
+            
+        result = response['result']
+        if not isinstance(result, dict):
+            time.sleep(interval)
+            continue
+            
+        pending = int(result['pending'], 16) if isinstance(result['pending'], str) else int(result['pending'])
+        queued = int(result['queued'], 16) if isinstance(result['queued'], str) else int(result['queued'])
+        
+        if pending == 0 and queued == 0:
+            return True
+            
+        time.sleep(interval)
+    return False
+
 def create_transaction_for_pool(client, configuration) -> str:
     """Create a transaction and return its hash without waiting for receipt."""
 
@@ -15,7 +38,7 @@ def create_transaction_for_pool(client, configuration) -> str:
 
     if funding_balance == 0:
         raise ValueError(f"Funding account {funding_account_address} has no balance. Please ensure there's an account with funds.")
-
+    
     # Generate a random private key for the transaction account
     private_key = "0x" + secrets.token_hex(32)
     account = Account.from_key(private_key)
@@ -29,39 +52,25 @@ def create_transaction_for_pool(client, configuration) -> str:
         'nonce': web3_client.eth.get_transaction_count(funding_account_address, 'latest'),
         'chainId': web3_client.eth.chain_id,
     }
-
+    
     # Sign the funding transaction (you'll need the private key of the funding account)
     funding_account_private_key = configuration["private_key"]  # Replace with actual private key
     signed_funding_tx = Account.sign_transaction(funding_tx, funding_account_private_key)
 
     # Send the signed funding transaction
     funding_tx_hash = web3_client.eth.send_raw_transaction(signed_funding_tx.raw_transaction)
-    web3_client.eth.wait_for_transaction_receipt(funding_tx_hash, timeout=int(configuration["transaction_timeout"]))
+    # web3_client.eth.wait_for_transaction_receipt(funding_tx_hash, timeout=int(configuration["transaction_timeout"]))
 
-    # Create the main transaction
-    transaction = {
-        'to': Web3.to_checksum_address('0x742d35Cc6634C0532925a3b844Bc454e4438f44e'),  # Example address
-        'value': web3_client.to_wei(0.00001, 'ether'),
-        'gas': 21000,
-        'gasPrice': web3_client.eth.gas_price,
-        # 'gasPrice': 1,  # Extremely low gas price to ensure it stays in pool
-        'nonce': web3_client.eth.get_transaction_count(account.address, 'latest'),
-        'chainId': web3_client.eth.chain_id,
-    }
-    # Sign the main transaction
-    signed_txn = account.sign_transaction(transaction)
-    # Send the pre-signed transaction
-    tx_hash = client.call("eth_sendRawTransaction", [signed_txn.raw_transaction.hex()])['result']
-    # tx_hash = web3_client.eth.send_raw_transaction(signed_txn.raw_transaction)
-    logger.info(f"Transaction hash: {tx_hash}")
-    
-    return tx_hash
-    
+    logger.info(f"Transaction hash: {funding_tx_hash.hex()}") 
+    return "0x" + funding_tx_hash.hex()
 
 @pytest.mark.api
 @pytest.mark.txpool
 def test_txpool_status_with_pending(client, configuration):
     """Test txpool_status shows pending transaction."""
+    # Wait for empty pool first
+    assert wait_for_empty_pool(client), "Pool not empty after timeout"
+    
     # Create a transaction that should stay in the pool
     tx_hash = create_transaction_for_pool(client, configuration)
     
@@ -95,6 +104,9 @@ def test_txpool_status_with_pending(client, configuration):
 @pytest.mark.txpool
 def test_txpool_content_with_pending(client, configuration):
     """Test txpool_content shows pending transaction details."""
+    # Wait for empty pool first
+    assert wait_for_empty_pool(client), "Pool not empty after timeout"
+    
     # Create a transaction that should stay in the pool
     tx_hash = create_transaction_for_pool(client, configuration)
     
@@ -145,6 +157,9 @@ def test_txpool_content_with_pending(client, configuration):
 @pytest.mark.txpool
 def test_txpool_inspect_with_pending(client, configuration):
     """Test txpool_inspect shows pending transaction summary."""
+    # Wait for empty pool first
+    assert wait_for_empty_pool(client), "Pool not empty after timeout"
+    
     # Create a transaction that should stay in the pool
     tx_hash = create_transaction_for_pool(client, configuration)
     
