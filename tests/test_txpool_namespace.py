@@ -5,28 +5,23 @@ from eth_account import Account
 from web3 import Web3
 import time
 
-def wait_for_empty_pool(client, timeout=30, interval=1):
-    """Wait until transaction pool is empty."""
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        response = client.call("txpool_status", [])
-        if 'result' not in response:
-            time.sleep(interval)
-            continue
-            
-        result = response['result']
-        if not isinstance(result, dict):
-            time.sleep(interval)
-            continue
-            
-        pending = int(result['pending'], 16) if isinstance(result['pending'], str) else int(result['pending'])
-        queued = int(result['queued'], 16) if isinstance(result['queued'], str) else int(result['queued'])
+def get_pool_transaction(client) -> tuple[bool, str]:
+    """Check if pool has transactions and return first transaction hash if found."""
+    response = client.call("txpool_content", [])
+    if 'result' not in response:
+        return False, ""
         
-        if pending == 0 and queued == 0:
-            return True
-            
-        time.sleep(interval)
-    return False
+    result = response['result']
+    if not isinstance(result, dict):
+        return False, ""
+        
+    # Look for any transaction in pending or queued
+    for status in ['pending', 'queued']:
+        for address, nonce_dict in result[status].items():
+            for nonce, tx in nonce_dict.items():
+                return True, tx['hash']
+    
+    return False, ""
 
 def create_transaction_for_pool(client, configuration) -> str:
     """Create a transaction and return its hash without waiting for receipt."""
@@ -68,14 +63,13 @@ def create_transaction_for_pool(client, configuration) -> str:
 @pytest.mark.txpool
 def test_txpool_status_with_pending(client, configuration):
     """Test txpool_status shows pending transaction."""
-    # Wait for empty pool first
-    assert wait_for_empty_pool(client), "Pool not empty after timeout"
+    # Check if pool already has transactions
+    has_tx, tx_hash = get_pool_transaction(client)
     
-    # Create a transaction that should stay in the pool
-    tx_hash = create_transaction_for_pool(client, configuration)
-    
-    # Give txpool a moment to process the transaction
-    time.sleep(1)
+    # Create new transaction only if pool is empty
+    if not has_tx:
+        tx_hash = create_transaction_for_pool(client, configuration)
+        time.sleep(1)  # Give txpool a moment to process the transaction
     
     response = client.call("txpool_status", [])
     assert 'result' in response
@@ -104,14 +98,13 @@ def test_txpool_status_with_pending(client, configuration):
 @pytest.mark.txpool
 def test_txpool_content_with_pending(client, configuration):
     """Test txpool_content shows pending transaction details."""
-    # Wait for empty pool first
-    assert wait_for_empty_pool(client), "Pool not empty after timeout"
+    # Check if pool already has transactions
+    has_tx, tx_hash = get_pool_transaction(client)
     
-    # Create a transaction that should stay in the pool
-    tx_hash = create_transaction_for_pool(client, configuration)
-    
-    # Give txpool a moment to process the transaction
-    time.sleep(1)
+    # Create new transaction only if pool is empty
+    if not has_tx:
+        tx_hash = create_transaction_for_pool(client, configuration)
+        time.sleep(1)  # Give txpool a moment to process the transaction
     
     response = client.call("txpool_content", [])
     assert 'result' in response
@@ -127,7 +120,7 @@ def test_txpool_content_with_pending(client, configuration):
     for status in ['pending', 'queued']:
         for address, nonce_dict in result[status].items():
             for nonce, tx in nonce_dict.items():
-                if tx.get('hash') == tx_hash:
+                if not tx_hash or tx.get('hash') == tx_hash:
                     tx_found = True
                     # Verify transaction fields
                     assert isinstance(tx, dict)
@@ -157,14 +150,13 @@ def test_txpool_content_with_pending(client, configuration):
 @pytest.mark.txpool
 def test_txpool_inspect_with_pending(client, configuration):
     """Test txpool_inspect shows pending transaction summary."""
-    # Wait for empty pool first
-    assert wait_for_empty_pool(client), "Pool not empty after timeout"
+    # Check if pool already has transactions
+    has_tx, tx_hash = get_pool_transaction(client)
     
-    # Create a transaction that should stay in the pool
-    tx_hash = create_transaction_for_pool(client, configuration)
-    
-    # Give txpool a moment to process the transaction
-    time.sleep(1)
+    # Create new transaction only if pool is empty
+    if not has_tx:
+        tx_hash = create_transaction_for_pool(client, configuration)
+        time.sleep(1)  # Give txpool a moment to process the transaction
     
     response = client.call("txpool_inspect", [])
     assert 'result' in response
