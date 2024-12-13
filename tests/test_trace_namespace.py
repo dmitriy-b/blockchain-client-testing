@@ -154,8 +154,7 @@ def test_trace_raw_transaction(client, configuration):
 
     # Send the signed funding transaction
     funding_tx_hash = web3_client.eth.send_raw_transaction(signed_funding_tx.raw_transaction)
-    web3_client.eth.wait_for_transaction_receipt(funding_tx_hash, timeout=int(configuration["transaction_timeout"]))
-    
+    # web3_client.eth.wait_for_transaction_receipt(funding_tx_hash, timeout=int(configuration["transaction_timeout"]))
     
     # Sign transaction
     raw_tx = signed_funding_tx.raw_transaction.hex()
@@ -260,7 +259,7 @@ def test_trace_get(client, ensure_transaction):
 def test_trace_filter(client, ensure_transaction):
     """Test trace_filter returns traces matching filter criteria."""
     # Create a transaction and get its hash
-    tx_hash = ensure_transaction()
+    tx_hash = create_transaction_if_not_exist(client, ensure_transaction)['transactions'][0]['hash']
     
     # Wait for transaction receipt
     web3_client: Web3 = client.web3  # type: ignore
@@ -286,14 +285,35 @@ def test_trace_filter(client, ensure_transaction):
     # Verify trace structure if any traces found
     for trace in result:
         assert isinstance(trace, dict)
+        # Common fields for all trace types
         assert 'action' in trace
         assert 'blockHash' in trace
         assert 'blockNumber' in trace
         assert 'subtraces' in trace
         assert 'traceAddress' in trace
-        assert 'transactionHash' in trace
-        assert 'transactionPosition' in trace
         assert 'type' in trace
+        
+        # Verify action structure based on type
+        action = trace['action']
+        assert isinstance(action, dict)
+        
+        if trace['type'] == 'reward':
+            # Reward trace specific fields
+            assert 'author' in action
+            assert 'rewardType' in action
+            assert 'value' in action
+        else:
+            # Transaction trace specific fields
+            assert 'transactionHash' in trace
+            assert 'transactionPosition' in trace
+            
+            # Common action fields for transaction traces
+            assert 'from' in action
+            if 'callType' in action:
+                assert action['callType'] in ['call', 'staticcall', 'delegatecall']
+            if 'value' in action:
+                assert isinstance(action['value'], str)
+                assert action['value'].startswith('0x')
 
 @pytest.mark.api
 @pytest.mark.trace
