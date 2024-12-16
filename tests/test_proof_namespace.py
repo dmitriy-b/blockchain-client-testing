@@ -1,39 +1,21 @@
 import pytest
 from web3 import Web3
 from eth_account import Account
+from conftest import create_transaction_if_not_exist
 
 @pytest.mark.api
 @pytest.mark.proof
-def test_proof_get_transaction_by_hash(client, configuration):
+def test_proof_get_transaction_by_hash(client, configuration, ensure_transaction):
     """Test proof_getTransactionByHash returns transaction with proof."""
-    web3_client: Web3 = client.web3  # type: ignore
-    # Use the first account from the node as the funding account
-    funding_account_address = configuration["public_key"]
-    funding_balance = web3_client.eth.get_balance(funding_account_address)
-
-    if funding_balance == 0:
-        raise ValueError(f"Funding account {funding_account_address} has no balance. Please ensure there's an account with funds.")
-
-    # Create a simple transaction
-    transaction = {
-        'to': Web3.to_checksum_address('0x742d35Cc6634C0532925a3b844Bc454e4438f44e'),
-        'value': web3_client.to_wei(0.00001, 'ether'),
-        'gas': 21000,
-        'gasPrice': web3_client.eth.gas_price,
-        'nonce': web3_client.eth.get_transaction_count(funding_account_address),
-        'chainId': web3_client.eth.chain_id,
-    }
-
-    # Sign and send transaction
-    signed_txn = Account.sign_transaction(transaction, configuration["private_key"])
-    tx_hash = web3_client.eth.send_raw_transaction(signed_txn.raw_transaction)
+    tx_hash = create_transaction_if_not_exist(client, ensure_transaction)['transactions'][0]['hash']
     
     # Wait for transaction receipt
+    web3_client: Web3 = client.web3  # type: ignore
     receipt = web3_client.eth.wait_for_transaction_receipt(tx_hash)
     assert receipt['status'] == 1, "Transaction failed"
     
     # Call proof_getTransactionByHash with transaction hash and includeHeader flag
-    response = client.call("proof_getTransactionByHash", [tx_hash.hex(), True])
+    response = client.call("proof_getTransactionByHash", [tx_hash, True])
     assert 'result' in response
     result = response['result']
     
@@ -71,36 +53,17 @@ def test_proof_get_transaction_by_hash(client, configuration):
 
 @pytest.mark.api
 @pytest.mark.proof
-def test_proof_get_transaction_receipt(client, configuration):
+def test_proof_get_transaction_receipt(client, configuration, ensure_transaction):
     """Test proof_getTransactionReceipt returns receipt with proof."""
-    web3_client: Web3 = client.web3  # type: ignore
-    # Use the first account from the node as the funding account
-    funding_account_address = configuration["public_key"]
-    funding_balance = web3_client.eth.get_balance(funding_account_address)
-
-    if funding_balance == 0:
-        raise ValueError(f"Funding account {funding_account_address} has no balance. Please ensure there's an account with funds.")
-
-    # Create a simple transaction
-    transaction = {
-        'to': Web3.to_checksum_address('0x742d35Cc6634C0532925a3b844Bc454e4438f44e'),
-        'value': web3_client.to_wei(0.00001, 'ether'),
-        'gas': 21000,
-        'gasPrice': web3_client.eth.gas_price,
-        'nonce': web3_client.eth.get_transaction_count(funding_account_address),
-        'chainId': web3_client.eth.chain_id,
-    }
-
-    # Sign and send transaction
-    signed_txn = Account.sign_transaction(transaction, configuration["private_key"])
-    tx_hash = web3_client.eth.send_raw_transaction(signed_txn.raw_transaction)
+    tx_hash = create_transaction_if_not_exist(client, ensure_transaction)['transactions'][0]['hash']
     
     # Wait for transaction receipt
+    web3_client: Web3 = client.web3  # type: ignore
     receipt = web3_client.eth.wait_for_transaction_receipt(tx_hash)
     assert receipt['status'] == 1, "Transaction failed"
     
     # Call proof_getTransactionReceipt with transaction hash and includeHeader flag
-    response = client.call("proof_getTransactionReceipt", [tx_hash.hex(), True])
+    response = client.call("proof_getTransactionReceipt", [tx_hash, True])
     assert 'result' in response
     result = response['result']
     
