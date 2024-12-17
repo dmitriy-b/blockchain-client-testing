@@ -2,6 +2,28 @@ import pytest
 from web3 import Web3
 import secrets
 
+def ensure_account_exists(client, account, password):
+    """Helper function to ensure account exists, importing it if necessary."""
+    # Check if account exists in personal_listAccounts
+    response = client.call("personal_listAccounts", [])
+    if account not in response['result']:
+        # Import account with a new private key
+        private_key = secrets.token_hex(32)
+        import_response = client.call("personal_importRawKey", [private_key, password])
+        assert 'result' in import_response, f"Failed to import account: {import_response.get('error', {}).get('message', 'Unknown error')}"
+        account = import_response['result']
+    return account
+
+def ensure_account_unlocked(client, account, password):
+    """Helper function to ensure account is unlocked."""
+    # Try to unlock account
+    response = client.call("personal_unlockAccount", [account, password])
+    if not response.get('result', False):
+        # If unlock failed, try locking and unlocking again
+        client.call("personal_lockAccount", [account])
+        response = client.call("personal_unlockAccount", [account, password])
+        assert response.get('result', False), f"Failed to unlock account: {response.get('error', {}).get('message', 'Unknown error')}"
+
 @pytest.mark.api
 @pytest.mark.personal
 def test_personal_list_accounts(client):
@@ -40,7 +62,6 @@ def test_personal_new_account(client, configuration):
 
 @pytest.mark.api
 @pytest.mark.personal
-@pytest.mark.order(1) # Run this test first
 def test_personal_import_raw_key(client, configuration):
     """Test personal_importRawKey imports a private key."""
     # Generate a random private key
@@ -63,15 +84,16 @@ def test_personal_import_raw_key(client, configuration):
 
 @pytest.mark.api
 @pytest.mark.personal
-@pytest.mark.order(2)  # Run this test first
 def test_personal_unlock_account(client, configuration):
     """Test personal_unlockAccount unlocks an account."""
-    try:
-        password = configuration["personal_account_password"]
-    except KeyError:
-        pytest.skip("Account password not configured")
-        
+    password = configuration["personal_account_password"]
     account = configuration["personal_account"]
+    
+    # Ensure account exists
+    account = ensure_account_exists(client, account, password)
+    
+    # First lock the account to ensure we're testing unlock
+    client.call("personal_lockAccount", [account])
     
     # Unlock account
     response = client.call("personal_unlockAccount", [account, password])
@@ -80,10 +102,13 @@ def test_personal_unlock_account(client, configuration):
 
 @pytest.mark.api
 @pytest.mark.personal
-@pytest.mark.order(4)
 def test_personal_lock_account(client, configuration):
     """Test personal_lockAccount locks an account."""
+    password = configuration["personal_account_password"]
     account = configuration["personal_account"]
+    
+    # Ensure account exists
+    account = ensure_account_exists(client, account, password)
     
     # Lock account
     response = client.call("personal_lockAccount", [account])
@@ -92,15 +117,15 @@ def test_personal_lock_account(client, configuration):
 
 @pytest.mark.api
 @pytest.mark.personal
-@pytest.mark.order(3)
 def test_personal_sign(client, configuration):
     """Test personal_sign signs a message."""
-    try:
-        password = configuration["personal_account_password"]
-    except KeyError:
-        pytest.skip("Account password not configured")
-        
+    password = configuration["personal_account_password"]
     account = configuration["personal_account"]
+    
+    # Ensure account exists and is unlocked
+    account = ensure_account_exists(client, account, password)
+    ensure_account_unlocked(client, account, password)
+    
     message = "0x48656c6c6f20576f726c64"  # "Hello World" in hex
     
     # Sign message
@@ -115,19 +140,20 @@ def test_personal_sign(client, configuration):
 
 @pytest.mark.api
 @pytest.mark.personal
-@pytest.mark.order(3)
 def test_personal_ec_recover(client, configuration):
     """Test personal_ecRecover recovers address from signed message."""
-    try:
-        password = configuration["personal_account_password"]
-    except KeyError:
-        pytest.skip("Account password not configured")
-        
+    password = configuration["personal_account_password"]
     account = configuration["personal_account"]
+    
+    # Ensure account exists and is unlocked
+    account = ensure_account_exists(client, account, password)
+    ensure_account_unlocked(client, account, password)
+    
     message = "0x48656c6c6f20576f726c64"  # "Hello World" in hex
     
     # First sign the message
     sign_response = client.call("personal_sign", [message, account, password])
+    assert 'result' in sign_response, f"Failed to sign message: {sign_response.get('error', {}).get('message', 'Unknown error')}"
     signature = sign_response['result']
     
     # Add recovery id (v) to the signature
