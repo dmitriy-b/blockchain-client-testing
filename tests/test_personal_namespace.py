@@ -40,17 +40,6 @@ def test_personal_new_account(client, configuration):
 
 @pytest.mark.api
 @pytest.mark.personal
-def test_personal_lock_account(client, configuration):
-    """Test personal_lockAccount locks an account."""
-    account = configuration["personal_account"]
-    
-    # Lock account
-    response = client.call("personal_lockAccount", [account])
-    assert 'result' in response
-    assert response['result'] is True
-
-@pytest.mark.api
-@pytest.mark.personal
 def test_personal_import_raw_key(client, configuration):
     """Test personal_importRawKey imports a private key."""
     # Generate a random private key
@@ -73,6 +62,7 @@ def test_personal_import_raw_key(client, configuration):
 
 @pytest.mark.api
 @pytest.mark.personal
+@pytest.mark.order(1)  # Run this test first
 def test_personal_unlock_account(client, configuration):
     """Test personal_unlockAccount unlocks an account."""
     try:
@@ -87,9 +77,21 @@ def test_personal_unlock_account(client, configuration):
     assert 'result' in response
     assert response['result'] is True
 
+@pytest.mark.api
+@pytest.mark.personal
+@pytest.mark.order(3)  # Run this test last
+def test_personal_lock_account(client, configuration):
+    """Test personal_lockAccount locks an account."""
+    account = configuration["personal_account"]
+    
+    # Lock account
+    response = client.call("personal_lockAccount", [account])
+    assert 'result' in response
+    assert response['result'] is True
 
 @pytest.mark.api
 @pytest.mark.personal
+@pytest.mark.order(2)  # Run after unlock and before lock
 def test_personal_sign(client, configuration):
     """Test personal_sign signs a message."""
     try:
@@ -112,6 +114,7 @@ def test_personal_sign(client, configuration):
 
 @pytest.mark.api
 @pytest.mark.personal
+@pytest.mark.order(2)  # Run after unlock and before lock
 def test_personal_ec_recover(client, configuration):
     """Test personal_ecRecover recovers address from signed message."""
     try:
