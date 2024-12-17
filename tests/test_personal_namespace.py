@@ -63,7 +63,7 @@ def test_personal_import_raw_key(client, configuration):
 
 @pytest.mark.api
 @pytest.mark.personal
-@pytest.mark.order(5)  # Run this test first
+@pytest.mark.order(2)  # Run this test first
 def test_personal_unlock_account(client, configuration):
     """Test personal_unlockAccount unlocks an account."""
     try:
