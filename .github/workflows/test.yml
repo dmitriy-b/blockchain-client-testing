@@ -9,6 +9,10 @@ on:
         description: "Client tag to run tests on"
         required: true
         default: "master"
+      pytest_tag:
+        description: "Tag to run pytest with"
+        required: true
+        default: "api"
   push:
   pull_request:
 
@@ -145,7 +149,7 @@ jobs:
           CHIADO_CI_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           CHIADO_SLACK_NOTIFY_ONLY_FAILED: 0
         run: |
-          pytest -m api --env=chiado --html=reports/integration_tests.html
+          pytest -m ${{ github.event.inputs.pytest_tag }} --env=chiado --html=reports/integration_tests.html
 
       - name: Run performance scenario 1
         env:

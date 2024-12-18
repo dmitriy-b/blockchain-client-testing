@@ -159,16 +159,15 @@ def test_personal_ec_recover(client, configuration):
     assert 'result' in sign_response, f"Failed to sign message: {sign_response.get('error', {}).get('message', 'Unknown error')}"
     signature = sign_response['result']
     
-    # Add recovery id (v) to the signature
-    # The signature from personal_sign is r + s, we need to add v (recovery id)
-    # v is either 27 or 28
-    signature_with_v = signature + "1b"  # Adding recovery id 27 (0x1b)
+    # Try both possible recovery IDs (27 and 28)
+    recovered_address = None
+    for v in ["1b", "1c"]:  # 27 (0x1b) and 28 (0x1c)
+        signature_with_v = signature + v
+        response = client.call("personal_ecRecover", [message, signature_with_v])
+        if 'result' in response and response['result'].lower() == account.lower():
+            recovered_address = response['result']
+            break
     
-    # Recover address from signature
-    response = client.call("personal_ecRecover", [message, signature_with_v])
-    assert 'result' in response
-    recovered_address = response['result']
-    
-    # Verify recovered address matches original signer
+    assert recovered_address is not None, "Failed to recover the correct address with either recovery ID"
     assert recovered_address.lower() == account.lower()
   
