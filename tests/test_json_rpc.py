@@ -280,9 +280,9 @@ def test_debug_trace_block_by_number_with_tracer_config(client):
         assert 'calls' not in response['result'][0]  # Ensure only top-level call is returned
 
 @pytest.mark.api
-def test_get_balance(client):
+def test_get_balance(client, configuration):
     # Address to check balance
-    address = '0xb3084539f554264aae4ebdb6250dec190e8aaffb'  # Example address (Ethereum Foundation)
+    address = configuration["public_key"]
     # Get balance using eth_getBalance
     balance_wei = client.call("eth_getBalance", [address, "latest"])['result']
     print(f"Balance of {address}: {balance_wei} Wei")

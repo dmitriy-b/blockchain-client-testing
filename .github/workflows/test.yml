@@ -149,7 +149,7 @@ jobs:
           CHIADO_CI_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           CHIADO_SLACK_NOTIFY_ONLY_FAILED: 0
         run: |
-          pytest -m ${{ github.event.inputs.pytest_tag }} --env=chiado --html=reports/integration_tests.html
+          pytest -m ${{ github.event.inputs.pytest_tag || 'api' }} --env=chiado --html=reports/integration_tests.html
 
       - name: Run performance scenario 1
         env:
