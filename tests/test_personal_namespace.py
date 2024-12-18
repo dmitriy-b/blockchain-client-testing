@@ -2,13 +2,12 @@ import pytest
 from web3 import Web3
 import secrets
 
-def ensure_account_exists(client, account, password):
+def ensure_account_exists(client, account, password, private_key):
     """Helper function to ensure account exists, importing it if necessary."""
     # Check if account exists in personal_listAccounts
     response = client.call("personal_listAccounts", [])
     if account not in response['result']:
         # Import account with a new private key
-        private_key = secrets.token_hex(32)
         import_response = client.call("personal_importRawKey", [private_key, password])
         assert 'result' in import_response, f"Failed to import account: {import_response.get('error', {}).get('message', 'Unknown error')}"
         account = import_response['result']
@@ -88,9 +87,10 @@ def test_personal_unlock_account(client, configuration):
     """Test personal_unlockAccount unlocks an account."""
     password = configuration["personal_account_password"]
     account = configuration["personal_account"]
+    private_key = configuration["personal_account_private_key"]
     
     # Ensure account exists
-    account = ensure_account_exists(client, account, password)
+    account = ensure_account_exists(client, account, password, private_key)
     
     # First lock the account to ensure we're testing unlock
     client.call("personal_lockAccount", [account])
@@ -106,9 +106,10 @@ def test_personal_lock_account(client, configuration):
     """Test personal_lockAccount locks an account."""
     password = configuration["personal_account_password"]
     account = configuration["personal_account"]
+    private_key = configuration["personal_account_private_key"]
     
     # Ensure account exists
-    account = ensure_account_exists(client, account, password)
+    account = ensure_account_exists(client, account, password, private_key)
     
     # Lock account
     response = client.call("personal_lockAccount", [account])
@@ -121,9 +122,10 @@ def test_personal_sign(client, configuration):
     """Test personal_sign signs a message."""
     password = configuration["personal_account_password"]
     account = configuration["personal_account"]
+    private_key = configuration["personal_account_private_key"]
     
     # Ensure account exists and is unlocked
-    account = ensure_account_exists(client, account, password)
+    account = ensure_account_exists(client, account, password, private_key)
     ensure_account_unlocked(client, account, password)
     
     message = "0x48656c6c6f20576f726c64"  # "Hello World" in hex
@@ -144,9 +146,10 @@ def test_personal_ec_recover(client, configuration):
     """Test personal_ecRecover recovers address from signed message."""
     password = configuration["personal_account_password"]
     account = configuration["personal_account"]
+    private_key = configuration["personal_account_private_key"]
     
     # Ensure account exists and is unlocked
-    account = ensure_account_exists(client, account, password)
+    account = ensure_account_exists(client, account, password, private_key)
     ensure_account_unlocked(client, account, password)
     
     message = "0x48656c6c6f20576f726c64"  # "Hello World" in hex
