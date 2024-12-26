@@ -159,6 +159,15 @@ jobs:
         run: |
           LOG_STDOUT_LEVEL=ERROR pytest --env=chiado  -k "test_performance_1"
 
+      - name: Save consensus logs
+        run: |
+          docker logs sedge-consensus-client 2>&1 | sed -r "s/\x1B\[[0-9;]*[mK]//g" > consensus.log
+
+      - name: Save execution logs
+        run: |
+          docker logs sedge-execution-client 2>&1 | sed -r "s/\x1B\[[0-9;]*[mK]//g" > execution.log
+
+
       - name: Stop sedge
         if: always()
         run: |
@@ -195,3 +204,17 @@ jobs:
         with:
           name: test-reports
           path: reports/
+
+      - name: Upload consensus logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consensus-logs
+          path: consensus.log
+
+      - name: Upload execution logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: execution-logs
+          path: execution.log
