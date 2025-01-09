@@ -301,7 +301,7 @@ def test_contract_deployed(client, configuration):
     # Get the code at the contract address
     code = client.call("eth_getCode", [contract_address, "latest"])['result']
     # Assert that the code is not '0x', which means the contract is deployed
-    assert code != '0x', "Contract is not deployed at the specified address"
+    assert code != '0x', "Contract is not deployed at the specified address. Code: " + code
 
         # Interact with the contract
     contract_instance = client.web3.eth.contract(address=Web3.to_checksum_address(contract_address), abi=open("contracts/HelloWorld.abi", "r").read())
