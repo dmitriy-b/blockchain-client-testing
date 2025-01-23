@@ -1,0 +1,222 @@
+name: Blockchain JSON-RPC Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      client_tag:
+        description: "Client tag to run tests on"
+        required: true
+        default: "master"
+      pytest_tag:
+        description: "Tag to run pytest with"
+        required: true
+        default: "api"
+      devnet_sync_url:
+        description: "Devnet sync url"
+        required: true
+        default: "http://192.155.94.98:4000/"
+
+jobs:
+  setup-and-test-devnet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 15
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq
+
+      - name: Install Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+          sudo apt-get update
+          sudo apt-get install -y docker-ce
+          sudo usermod -aG docker $USER
+
+      - name: Install Docker Compose
+        run: |
+          sudo curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 --output docker-compose
+          sudo chmod +x docker-compose
+          sudo mv docker-compose /usr/local/bin/docker-compose
+          sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+          which docker-compose
+          docker-compose --version
+
+      - name: Download Sedge
+        run: |
+          curl -L https://github.com/NethermindEth/sedge/releases/download/v1.5.0/sedge-v1.5.0-linux-amd64 --output sedge
+          ls -l sedge  # List file details to check download
+
+      - name: Set permissions for Sedge
+        run: |
+          chmod +x sedge
+          ls -l sedge  # List file details to check permissions
+
+      - name: Move Sedge to /usr/local/bin
+        run: |
+          sudo mv sedge /usr/local/bin/sedge
+          sudo ln -s /usr/local/bin/sedge /usr/bin/sedge
+          which sedge  # Verify the location of sedge
+          sedge version  # Check if sedge is executable
+
+      - name: Setup Sedge environment
+        run: |
+          sedge deps install >> sedge.logs
+          sedge generate --logging none -p $HOME full-node \
+          --map-all --no-mev-boost --no-validator \
+          --network chiado -c lighthouse:sigp/lighthouse:latest \
+          -e nethermind:nethermindeth/nethermind:${{ github.event.inputs.client_tag || 'master' }} \
+          --el-extra-flag Sync.NonValidatorNode=true \
+          --el-extra-flag Sync.DownloadBodiesInFastSync=false \
+          --el-extra-flag Sync.DownloadReceiptsInFastSync=false \
+          --el-extra-flag JsonRpc.EnabledModules=[Eth,TxPool,Web3,Net,Health,Rpc,Debug,Trace,Subscribe,Proof,Personal,Parity,Evm,Client,Admin] \
+          --cl-extra-flag checkpoint-sync-url=${{ github.event.inputs.devnet_sync_url }} >> sedge.logs
+
+      - name: Check Sedge dependencies
+        run: |
+          cp /home/runner/.env .
+          cp /home/runner/docker-compose.yml .
+          sedge deps check >> sedge.logs &
+
+      - name: Restore network cache
+        id: cache-restore-devnet
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            consensus-data
+            execution-data
+          key: cache-network-devnet
+
+      - name: Run Sedge
+        run: sedge run -p . >> sedge.logs &
+
+      - name: Wait for Nethermind synchronization complete
+        timeout-minutes: 240
+        run: |
+          echo "Waiting for Nethermind to synchronize..."
+          while true; do
+            if curl -s localhost:8545 > /dev/null; then
+              break
+            fi
+            sleep 10
+          done
+          echo "Nethermind is up. Checking sync status..."
+          echo "Sending eth_syncing request..."
+          response=$(curl localhost:8545   -X POST   -H "Content-Type: application/json"   --data '{
+            "jsonrpc": "2.0",
+            "id": 0,
+            "method": "eth_syncing",
+            "params": []
+          }')
+          echo "Response: $response"
+          while true; do
+            response=$(curl -s localhost:8545 -X POST -H "Content-Type: application/json" --data '{
+              "jsonrpc": "2.0",
+              "id": 0,
+              "method": "eth_syncing",
+              "params": []
+            }')
+            echo "Response: $response"
+            if echo "$response" | grep -q "false"; then
+              echo "Synchronization completed."
+              break
+            fi
+            du -sh  execution-data/
+            sleep 20
+          done
+
+      - name: Install Python dependencies
+        run: |
+          ls -la
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run verification scenario 1
+        env:
+          CHIADO_SLACK_WEBHOOK_LINK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          CHIADO_CI_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CHIADO_SLACK_NOTIFY_ONLY_FAILED: 0
+        run: |
+          pytest -m ${{ github.event.inputs.pytest_tag || 'api' }} --env=pectra-devnet --html=reports/integration_tests.html
+
+      - name: Run performance scenario 1
+        env:
+          CHIADO_SLACK_WEBHOOK_LINK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          CHIADO_CI_JOB_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CHIADO_SLACK_NOTIFY_ONLY_FAILED: 1
+        run: |
+          LOG_STDOUT_LEVEL=ERROR pytest --env=pectra-devnet  -k "test_performance_1"
+
+      - name: Save consensus logs
+        if: always()
+        run: |
+          docker logs sedge-consensus-client 2>&1 | sed -r "s/\x1B\[[0-9;]*[mK]//g" > consensus.log
+
+      - name: Save execution logs
+        if: always()
+        run: |
+          docker logs sedge-execution-client 2>&1 | sed -r "s/\x1B\[[0-9;]*[mK]//g" > execution.log
+
+
+      - name: Stop sedge
+        if: always()
+        run: |
+          sedge -p $PWD down
+          sleep 30
+
+      - name: Fix caching permissions
+        if: always()
+        run: |
+          sudo chmod -R a+r consensus-data
+          sudo chmod -R a+r execution-data
+
+      - name: Save network cache
+        if: always()
+        id: cache-save
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            consensus-data
+            execution-data
+          key: ${{ steps.cache-restore.outputs.cache-primary-key }}-${{ github.run_id }}
+
+
+      - name: Upload Sedge logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sedge-logs
+          path: sedge.logs
+
+      - name: Upload Locust pytest and locust reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: reports/
+
+      - name: Upload consensus logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consensus-logs
+          path: consensus.log
+
+      - name: Upload execution logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: execution-logs
+          path: execution.log
