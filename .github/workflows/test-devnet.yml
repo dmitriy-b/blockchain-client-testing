@@ -1,4 +1,4 @@
-name: Blockchain JSON-RPC Tests
+name: Blockchain JSON-RPC Tests (Devnet)
 
 on:
   workflow_dispatch:

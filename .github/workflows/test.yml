@@ -1,4 +1,4 @@
-name: Blockchain JSON-RPC Tests
+name: Blockchain JSON-RPC Tests (Chiado)
 
 on:
   schedule:
