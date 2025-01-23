@@ -14,3 +14,5 @@ rlp==4.0.1
 eth-utils==5.0.0
 mypy==1.12.1
 slackweb==1.0.5
+py-solc-x==2.0.3
+charset_normalizer==3.3.2
