@@ -1,5 +1,4 @@
 import pytest
-import time
 from eth_account import Account
 from web3 import Web3
 
@@ -293,19 +292,3 @@ def test_get_balance(client, configuration):
     # Assertions
     assert Web3.to_int(hexstr=balance_wei) >= 0, "Balance should be non-negative"
     assert isinstance(balance_eth, float), "Balance in ETH should be a float"
-
-@pytest.mark.api
-def test_contract_deployed(client, configuration):
-    # Address of the contract to check
-    contract_address = configuration["hello_world_contract_address"]
-    # Get the code at the contract address
-    code = client.call("eth_getCode", [contract_address, "latest"])['result']
-    # Assert that the code is not '0x', which means the contract is deployed
-    assert code != '0x', "Contract is not deployed at the specified address. Code: " + code
-
-        # Interact with the contract
-    contract_instance = client.web3.eth.contract(address=Web3.to_checksum_address(contract_address), abi=open("contracts/HelloWorld.abi", "r").read())
-    result = contract_instance.functions.sayHello().call()
-    assert result == "Hello, World!", "Contract did not return the expected message"
-
-

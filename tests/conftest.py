@@ -10,6 +10,8 @@ import configparser
 import pytest
 import secrets
 from utils.slack_report import send_to_slack
+import json
+from pathlib import Path
 
 def create_transaction_if_not_exist(client, ensure_transaction):
     hash = ["latest", True]
@@ -174,3 +176,61 @@ def run_with_network(request, configuration):
     logger.info("Test requires network: " + str(marker.kwargs["network"]))
     if configuration["env_name"] not in marker.kwargs["network"]:
         pytest.skip(f"Skipping test for {configuration['env_name']} network. The test is designed to run only for {marker.kwargs['network']} networks")
+
+@pytest.fixture(scope="session")
+def deploy_contract(client: JsonRpcClient, configuration):
+    def _deploy_contract(binary_path: str):
+        # Read contract binary
+        contract_path = Path(binary_path)
+        if not contract_path.exists():
+            raise FileNotFoundError(f"Contract binary not found at {binary_path}")
+            
+        with open(binary_path, 'r') as f:
+            contract_bin = f.read().strip()
+        
+        if not contract_bin.startswith('0x'):
+            contract_bin = '0x' + contract_bin
+
+        # Prepare deployment transaction
+        web3_client = client.web3
+        deployer_address = configuration["public_key"]
+        
+        deploy_tx = {
+            'from': deployer_address,
+            'data': contract_bin,
+            'gas': 2000000,  # Adjust gas limit as needed
+            'gasPrice': web3_client.eth.gas_price,
+            'nonce': web3_client.eth.get_transaction_count(deployer_address),
+            'chainId': web3_client.eth.chain_id,
+        }
+
+        # Sign and send deployment transaction
+        signed_tx = Account.sign_transaction(
+            deploy_tx,
+            configuration["private_key"]
+        )
+        
+        tx_hash = client.call(
+            "eth_sendRawTransaction",
+            [signed_tx.raw_transaction.hex()]
+        )['result']
+        
+        # Wait for deployment to complete
+        receipt = None
+        for _ in range(30):  # 30 attempts with 2-second intervals
+            receipt = client.call("eth_getTransactionReceipt", [tx_hash])
+            if receipt['result'] is not None:
+                break
+            time.sleep(2)
+            
+        if receipt is None or receipt['result'] is None:
+            raise TimeoutError("Contract deployment transaction was not mined")
+            
+        contract_address = receipt['result']['contractAddress']
+        return {
+            'address': contract_address,
+            'transaction_hash': tx_hash,
+            'receipt': receipt['result']
+        }
+        
+    return _deploy_contract
