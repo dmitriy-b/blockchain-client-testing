@@ -162,7 +162,7 @@ jobs:
               echo "Synchronization completed."
               break
             fi
-            du -sh  consensus-data/
+            du -sh  consensus-data/ || echo "Consensus data not found"
             sleep 20
           done
 
