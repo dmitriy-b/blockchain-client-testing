@@ -16,7 +16,7 @@ on:
       consensus_port:
         description: "Consensus port"
         required: true
-        default: "5052"
+        default: "4000"
   push:
   pull_request:
 
@@ -158,7 +158,7 @@ jobs:
           while true; do
             response=$(curl http://localhost:${{ github.event.inputs.consensus_port }}/eth/v1/node/syncing)
             echo "Response: $response"
-            if echo "$response" | grep -q "false"; then
+            if echo "$response" | grep -q '"is_syncing":false'; then
               echo "Synchronization completed."
               break
             fi
