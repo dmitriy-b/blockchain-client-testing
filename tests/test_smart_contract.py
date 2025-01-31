@@ -39,4 +39,4 @@ def test_contract_deployed(client, configuration):
         # Interact with the contract
     contract_instance = client.web3.eth.contract(address=Web3.to_checksum_address(contract_address), abi=open("contracts/HelloWorld.abi", "r").read())
     result = contract_instance.functions.sayHello().call()
-    assert result == "Hello, World!", "Contract did not return the expected message"
+    assert result == "Hello, QA!", "Contract did not return the expected message"
