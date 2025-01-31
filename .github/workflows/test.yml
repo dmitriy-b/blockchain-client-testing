@@ -125,6 +125,14 @@ jobs:
             "params": []
           }')
           echo "Response: $response"
+
+          response=$(curl -s localhost:8545 -X POST -H "Content-Type: application/json" --data '{
+              "jsonrpc": "2.0",
+              "id": 0,
+              "method": "debug_getSyncStage",
+              "params": []
+            }')
+          echo "Sync stage: $response"
           while true; do
             response=$(curl -s localhost:8545 -X POST -H "Content-Type: application/json" --data '{
               "jsonrpc": "2.0",
@@ -134,7 +142,8 @@ jobs:
             }')
             echo "Response: $response"
             if echo "$response" | grep -q "false"; then
-              echo "Synchronization completed."
+              echo "Synchronization completed. DB size:"
+              du -sh  execution-data/
               break
             fi
             du -sh  execution-data/
