@@ -86,7 +86,7 @@ jobs:
           --el-extra-flag Sync.DownloadBodiesInFastSync=false \
           --el-extra-flag Sync.DownloadReceiptsInFastSync=false \
           --el-extra-flag JsonRpc.EnabledModules=[Eth,TxPool,Web3,Net,Health,Rpc,Debug,Trace,Subscribe,Proof,Personal,Parity,Evm,Client,Admin] \
-          --cl-extra-flag checkpoint-sync-url=http://139.144.26.89:4000/ >> sedge.logs
+          --cl-extra-flag checkpoint-sync-url=https://checkpoint.chiadochain.net/ >> sedge.logs
 
       - name: Check Sedge dependencies
         run: |
