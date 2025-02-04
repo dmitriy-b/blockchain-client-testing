@@ -1,0 +1,127 @@
+services:
+  execution-teku:
+    tty: true
+    environment:
+    - TERM=xterm-256color
+    - COLORTERM=truecolor
+    stop_grace_period: 30s
+    container_name: sedge-execution-client-teku
+    restart: unless-stopped
+    image: ${EC_IMAGE_VERSION}
+    networks:
+    - sedge
+    volumes:
+    - ${EC_DATA_DIR}:/nethermind/data
+    - ${DEVNET_DATA_DIR}:/devnet
+    - ${EC_JWT_SECRET_PATH}:/tmp/jwt/jwtsecret
+    ports:
+    - 30304:30303/tcp
+    - 30304:30303/udp
+    - 8009:8008
+    - 8548:8545
+    - 8552:8551
+    - 8547:8546
+    expose:
+    - 8545
+    - 8546
+    - 8551
+    healthcheck:
+      test: ["CMD", "sleep", "30"]
+      interval: 10s
+      timeout: 35s
+      retries: 1
+      start_period: 30s
+    command:
+    - --config=none
+    - --Init.ChainSpecPath=/devnet/chainspec.json
+    - --datadir=/nethermind/data
+    - --log=${NETHERMIND_LOG_LEVEL}
+    - --Init.WebSocketsEnabled=true
+    - --Init.DiagnosticMode=None
+    - --Init.AutoDump=All
+    - --JsonRpc.IpcUnixDomainSocketPath=/nethermind/data/rpc.sock
+    - --JsonRpc.AdditionalRpcUrls=http://localhost:8550|http;ws|net;eth;consensus;subscribe;web3;admin;txpool;debug;trace;parity|no-auth
+    - --JsonRpc.EnabledModules=net,eth,consensus,subscribe,web3,admin,txpool,debug,trace,parity
+    - --Network.P2PPort=30303
+    - --Merge.Enabled=true
+    - --Network.Bootnodes=enode://574652790ecd9f5b53e689b8a36d592a1953f8a57ae22a57183201b5edb0cf57b214e0dbab45ab52432adfd941657fcb8669ec310d987d1d1904febd2bba8600@172.105.149.125:30303,enode://72cb333b0c987bfa04817fa31e84054d59ff2e415127350a5cac62c268905afbbfd2fbb943821f2e517d754cd1bc18ee4cf9422e6f64bc69a45498108b1b6f43@192.155.94.236:30303,enode://c4f0a68aff112b22d995d4b6598095c059574eb13eaa8455faf260711605e444738ee384bd4dc7ba7a7135de5b5496e6e4cd9c03bc4e28d5966b30e636c3e2b2@192.155.94.134:30303,enode://eeabeb80a05b4711d5ba00e0f67497ee0d1c892c3b195baee2427740b0335a438ad183b4d34b31b33720ff3f03c5b05cbeb325378953fb5d4131caf16c108be7@172.105.149.163:30303,enode://e5f5d2896de0a1441f3f8c8575d90194027477311416055cef38464d940629e06f0215d24c4090e265ba9df88b681a1333c8d3f2dc0a17c4069887ab4835c419@192.155.94.25:30303,enode://9c64375c93093f0c07f7cec186fe425ca199ec84221976cf9d35d3a27c57dd0093b8812a09f59bb89807b8846cbc370ba502b567f64aa7b11a4c34a353f3149b@192.155.94.19:30303,enode://47fb02691363f6d753c8faf91b1d963516a6ef169babe54610661afae9fed4b832cad64ee8ad0ff3f2f405a634d7bdcfe97affb54b5f65c1a3902ce119bc5b23@172.105.149.120:30303,enode://8b2e1127c03d3f3c561101cebb3886215f17c3d5a58ed615e023a641570697bc3ad483b1dc5fdca85a23ec2b689a0d8c4413944787a8323ac59c9f7a2c16d5ce@172.105.149.46:30303
+    - --Discovery.Bootnodes=enode://574652790ecd9f5b53e689b8a36d592a1953f8a57ae22a57183201b5edb0cf57b214e0dbab45ab52432adfd941657fcb8669ec310d987d1d1904febd2bba8600@172.105.149.125:30303,enode://72cb333b0c987bfa04817fa31e84054d59ff2e415127350a5cac62c268905afbbfd2fbb943821f2e517d754cd1bc18ee4cf9422e6f64bc69a45498108b1b6f43@192.155.94.236:30303,enode://c4f0a68aff112b22d995d4b6598095c059574eb13eaa8455faf260711605e444738ee384bd4dc7ba7a7135de5b5496e6e4cd9c03bc4e28d5966b30e636c3e2b2@192.155.94.134:30303,enode://eeabeb80a05b4711d5ba00e0f67497ee0d1c892c3b195baee2427740b0335a438ad183b4d34b31b33720ff3f03c5b05cbeb325378953fb5d4131caf16c108be7@172.105.149.163:30303,enode://e5f5d2896de0a1441f3f8c8575d90194027477311416055cef38464d940629e06f0215d24c4090e265ba9df88b681a1333c8d3f2dc0a17c4069887ab4835c419@192.155.94.25:30303,enode://9c64375c93093f0c07f7cec186fe425ca199ec84221976cf9d35d3a27c57dd0093b8812a09f59bb89807b8846cbc370ba502b567f64aa7b11a4c34a353f3149b@192.155.94.19:30303,enode://47fb02691363f6d753c8faf91b1d963516a6ef169babe54610661afae9fed4b832cad64ee8ad0ff3f2f405a634d7bdcfe97affb54b5f65c1a3902ce119bc5b23@172.105.149.120:30303,enode://8b2e1127c03d3f3c561101cebb3886215f17c3d5a58ed615e023a641570697bc3ad483b1dc5fdca85a23ec2b689a0d8c4413944787a8323ac59c9f7a2c16d5ce@172.105.149.46:30303
+    - --Network.StaticPeers=enode://574652790ecd9f5b53e689b8a36d592a1953f8a57ae22a57183201b5edb0cf57b214e0dbab45ab52432adfd941657fcb8669ec310d987d1d1904febd2bba8600@172.105.149.125:30303,enode://72cb333b0c987bfa04817fa31e84054d59ff2e415127350a5cac62c268905afbbfd2fbb943821f2e517d754cd1bc18ee4cf9422e6f64bc69a45498108b1b6f43@192.155.94.236:30303,enode://c4f0a68aff112b22d995d4b6598095c059574eb13eaa8455faf260711605e444738ee384bd4dc7ba7a7135de5b5496e6e4cd9c03bc4e28d5966b30e636c3e2b2@192.155.94.134:30303,enode://eeabeb80a05b4711d5ba00e0f67497ee0d1c892c3b195baee2427740b0335a438ad183b4d34b31b33720ff3f03c5b05cbeb325378953fb5d4131caf16c108be7@172.105.149.163:30303,enode://e5f5d2896de0a1441f3f8c8575d90194027477311416055cef38464d940629e06f0215d24c4090e265ba9df88b681a1333c8d3f2dc0a17c4069887ab4835c419@192.155.94.25:30303,enode://9c64375c93093f0c07f7cec186fe425ca199ec84221976cf9d35d3a27c57dd0093b8812a09f59bb89807b8846cbc370ba502b567f64aa7b11a4c34a353f3149b@192.155.94.19:30303,enode://47fb02691363f6d753c8faf91b1d963516a6ef169babe54610661afae9fed4b832cad64ee8ad0ff3f2f405a634d7bdcfe97affb54b5f65c1a3902ce119bc5b23@172.105.149.120:30303,enode://8b2e1127c03d3f3c561101cebb3886215f17c3d5a58ed615e023a641570697bc3ad483b1dc5fdca85a23ec2b689a0d8c4413944787a8323ac59c9f7a2c16d5ce@172.105.149.46:30303
+    - --JsonRpc.Enabled=true
+    - --JsonRpc.Host=0.0.0.0
+    - --JsonRpc.Port=8545
+    - --JsonRpc.WebSocketsPort=8546
+    - --JsonRpc.JwtSecretFile=/tmp/jwt/jwtsecret
+    - --JsonRpc.EngineHost=0.0.0.0
+    - --JsonRpc.EnginePort=8551
+    - --Network.DiscoveryPort=30303
+    - --HealthChecks.Enabled=true
+    - --Metrics.Enabled=true
+    - --Metrics.ExposePort=8008
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "10"
+  consensus-teku:
+    stop_grace_period: 30s
+    container_name: sedge-consensus-client-teku
+    restart: unless-stopped
+    image: ${CC_IMAGE_VERSION}
+    networks:
+    - sedge
+    volumes:
+    - ${CC_DATA_DIR}:/beacondata
+    - ${DEVNET_DATA_DIR}:/custom_config_data
+    - ${CC_JWT_SECRET_PATH}:/jwtsecret:rw
+    - ${VL_DATA_DIR}:/validatordata
+    ports:
+    - 9001:9000/tcp
+    - 9001:9000/udp
+    - 5055:5054/tcp
+    - 4001:4000
+    expose:
+    - 4000
+    depends_on:
+      execution-teku:
+        condition: service_healthy
+    command:
+    - --network=/custom_config_data/config.yaml
+    - --genesis-state=/custom_config_data/genesis.ssz
+    - --data-path=/beacondata
+    - --data-storage-mode=PRUNE
+    - --p2p-enabled=true
+    - --p2p-advertised-ip=172.105.149.46
+    - --p2p-port=9000
+    - --p2p-advertised-port=9000
+    - --logging=info
+    - --p2p-peer-upper-bound=100
+    - --eth1-endpoints=http://execution-teku:8545
+    - --ee-endpoint=http://execution-teku:8551
+    - --p2p-discovery-bootnodes=enr:-MS4QEKtOJcy6z-ZzLnL5ma_CgANLtT_wLo53rQH-hwQ_DXiMl8fIPg5UoKxOJvcv6nIUnW_xh_fGYNQ2edYih0dhwMDh2F0dG5ldHOIAAAAAAAAAAOEZXRoMpDMHyujBAAAcgEAAAAAAAAAgmlkgnY0gmlwhKxplX2EcXVpY4IjKYlzZWNwMjU2azGhA6IUjHCxcJAHZfC64EewZpCBTOwO8mTlvaZZwjp4e8vAiHN5bmNuZXRzAIN0Y3CCIyiDdWRwgiMo,enr:-MS4QJ2RAhjtlIyjbhs4zkC705V5wnWM61oDMB1kr6k70m8FMpCXFz4AioTQR5RbgMBReZMIx1i_bCOunePmeOPkdJUEh2F0dG5ldHOIDAAAAAAAAACEZXRoMpDMHyujBAAAcgEAAAAAAAAAgmlkgnY0gmlwhMCbXuyJc2VjcDI1NmsxoQIoast443yW2EBkcr0p9XVurnNDEWZtfAd3scw-FBVQ2IhzeW5jbmV0c4gAAAAAAAAAAIN0Y3CCIyiDdWRwgiMo,enr:-MG4QNhJw7arhODcY8mED6d5J4tikdJNooyOB3D5PUZ-I8I_C58feJjfQ4z3N3HqqVgDhiV-7T7zn3YXUfo9De6A9vwEh2F0dG5ldHOIAAAAAAAAABiDY2djBIRldGgykMwfK6MEAAByAQAAAAAAAACCaWSCdjSCaXCEwJteholzZWNwMjU2azGhA44B3pfkfHoOKhbQfl3kgHaojjm5dIgjf2swm8blpjPGiHN5bmNuZXRzD4N0Y3CCIyiDdWRwgiMo,enr:-LK4QEYvqFzfnKQOljqnzyMRDhRDiBTZl_yIqALX7JTcEi7MUReUEJQQCRwzPF8NL2Qx4xZj-w1qnkKMO6-6X8PXWjMEh2F0dG5ldHOIMAAAAAAAAACEZXRoMpDMHyujBAAAcgEAAAAAAAAAgmlkgnY0gmlwhKxplaOJc2VjcDI1NmsxoQMJWQ23XAZkB7ik5YWJCDwT4yl5Vf421UD7wLr_QZYiS4N0Y3CCIyiDdWRwgiMo,enr:-MS4QCQhLKopvJMLr0P9zMs1HPa4vSr6y15EnjJRD2vV2QdzID948T-sWqAXzPhmYqWcs1BLGV8uSzuLd94ot7nw5Q4Dh2F0dG5ldHOIAAAwAAAAAACEZXRoMpDMHyujBAAAcgEAAAAAAAAAgmlkgnY0gmlwhMCbXhmEcXVpY4IjKYlzZWNwMjU2azGhAg62ldOnzXiW1K6YGOxStwe05k2yZ25dUjaHbc8L1mf3iHN5bmNuZXRzAIN0Y3CCIyiDdWRwgiMo,enr:-MS4QKbEjBQi4860biiPVHYR4XhVeI5aULIBydsd2CoP0DU4GlcWhou6S8Jhv98NJD8ORq6DvlDIW4x8nNIid3GvsCgEh2F0dG5ldHOIAAAABgAAAACEZXRoMpDMHyujBAAAcgEAAAAAAAAAgmlkgnY0gmlwhMCbXhOJc2VjcDI1NmsxoQNaHmkOYLT4tNAJc_HKW-pk5wGUXl4QpLR5YX-vffcaP4hzeW5jbmV0c4gAAAAAAAAAAIN0Y3CCIyiDdWRwgiMo,enr:-MG4QCGODXySmEBAZpPPWdBtA8v4SbOZWudPh6yYEH0wmsQ3LW121WljRZ-Og_yK3Xh0VvXYALphdele1Onva5Aju40Eh2F0dG5ldHOIAAAGAAAAAACDY2djBIRldGgykMwfK6MEAAByAQAAAAAAAACCaWSCdjSCaXCErGmVeIlzZWNwMjU2azGhAwVUSuSSzLDXPtukVEn_2B97bj7EGp69gSOhO3ooVxyNiHN5bmNuZXRzD4N0Y3CCIyiDdWRwgiMo
+    - --rest-api-enabled=true
+    - --rest-api-docs-enabled=true
+    - --rest-api-interface=0.0.0.0
+    - --rest-api-port=4000
+    - --metrics-host-allowlist=*
+    - --rest-api-host-allowlist=*
+    - --data-storage-non-canonical-blocks-enabled=true
+    - --validators-proposer-default-fee-recipient=0x1BecDF6300b41Cc87F2cbE7788b0b06CCd099bf6
+    - --validators-graffiti=nn-tk-db
+    - --validator-keys=/validatordata/keys:/validatordata/secrets
+    - --validators-keystore-locking-enabled=false
+    - --beacon-liveness-tracking-enabled=true
+    - --ee-jwt-secret-file=/jwtsecret
+    - --Xlog-include-p2p-warnings-enabled
+    - --metrics-block-timing-tracking-enabled
+    - --ignore-weak-subjectivity-period-enabled
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "10"
+
+networks:
+  sedge:
+    name: sedge-network-teku
+    
