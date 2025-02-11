@@ -149,31 +149,6 @@ jobs:
             du -sh  execution-data/
             sleep 20
           done
-        
-      - name: Wait for Lighthouse synchronization complete
-        timeout-minutes: 240
-        run: |
-          echo "Waiting for Lighthouse to synchronize..."
-          while true; do
-            if curl -s localhost:${{ github.event.inputs.consensus_port || '4000' }} > /dev/null; then
-              break
-            fi
-            sleep 10
-          done
-          echo "Lighthouse is up. Checking sync status..."
-          echo "Sending eth_syncing request..."
-          response=$(curl http://localhost:${{ github.event.inputs.consensus_port || '4000' }}/eth/v1/node/syncing)
-          echo "Response: $response"
-          while true; do
-            response=$(curl http://localhost:${{ github.event.inputs.consensus_port || '4000' }}/eth/v1/node/syncing)
-            echo "Response: $response"
-            if echo "$response" | grep -q '"is_syncing":false'; then
-              echo "Synchronization completed."
-              break
-            fi
-            du -sh  consensus-data/ || echo "Consensus data not found"
-            sleep 20
-          done
 
       - name: Install Python dependencies
         run: |
