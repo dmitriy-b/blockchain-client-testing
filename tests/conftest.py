@@ -122,7 +122,7 @@ def create_transaction(client: JsonRpcClient, configuration):
         # Create a funding transaction
         funding_tx = {
             'to': account.address,
-            'value': web3_client.to_wei(0.0001, 'ether'),
+            'value': web3_client.to_wei(0.001, 'ether'),
             'gas': 21000,
             'gasPrice': web3_client.eth.gas_price,
             'nonce': web3_client.eth.get_transaction_count(funding_account_address),
@@ -149,7 +149,11 @@ def create_transaction(client: JsonRpcClient, configuration):
         # Sign the main transaction
         signed_txn = account.sign_transaction(transaction)
         # Send the pre-signed transaction
-        tx_hash = client.call("eth_sendRawTransaction", [signed_txn.raw_transaction.hex()])['result']
+        tr = client.call("eth_sendRawTransaction", [signed_txn.raw_transaction.hex()])
+        if 'result' not in tr:
+            logger.error(f"Failed to send transaction from {account.address} to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e. Balance: {web3_client.eth.get_balance(account.address)}")
+            raise ValueError(f"Transaction failed: {tr['error']}")
+        tx_hash = tr['result']
         # tx_hash = web3_client.eth.send_raw_transaction(signed_txn.raw_transaction)
         logger.info(f"Transaction hash: {tx_hash}")
         return tx_hash
