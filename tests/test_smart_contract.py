@@ -5,7 +5,7 @@ from web3 import Web3
 
 @pytest.mark.api
 @pytest.mark.contract
-def test_deploy_and_verify_contract(deploy_contract, client):
+def test_deploy_and_verify_contract(deploy_contract, client, configuration):
     # Deploy the contract
     contract_path = "contracts/HelloWorld.bin"
     
@@ -24,6 +24,8 @@ def test_deploy_and_verify_contract(deploy_contract, client):
     print(f"\nContract deployed successfully:")
     print(f"Address: {contract_address}")
     print(f"Transaction Hash: {deployment['transaction_hash']}") 
+
+    configuration["hello_world_contract_address"] = contract_address
 
 
 @pytest.mark.api
