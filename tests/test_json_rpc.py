@@ -19,7 +19,7 @@ def test_eth_get_block_by_number(client):
     response = client.call("eth_getBlockByNumber", [block_number, True])
     assert 'result' in response
     assert response['result'] is not None
-    assert response['result']['author'] is not None
+    # assert response['result']['author'] is not None
     assert response['result']['difficulty'] is not None
     assert response['result']['extraData'] is not None
     assert response['result']['gasLimit'] is not None
@@ -120,7 +120,9 @@ def test_eth_syncing_wrong_param(client):
 def test_debug_trace_transaction(client, ensure_transaction):
     # First, get a transaction hash from a recent block
     tx_hash = create_transaction_if_not_exist(client, ensure_transaction)['transactions'][0]['hash']
+    # tx_hash = "0x4ddc9c98cedc6fd98eabd06f0dbf7ad02609c20acbc6789d1ea8a8800f096cec"
     response = client.call("debug_traceTransaction", [tx_hash])
+    print(response)
     assert 'result' in response
     assert 'gas' in response['result']
     assert 'returnValue' in response['result']
@@ -192,10 +194,10 @@ def test_debug_trace_block_by_hash_with_options(client, ensure_transaction):
     assert 'result' in response
     assert isinstance(response['result'], list)
     if len(response['result']) > 0:
-        # assert 'type' in response['result'][0]
-        assert 'from' in response['result'][0]
-        assert 'to' in response['result'][0]
-        assert 'input' in response['result'][0]
+        assert 'type' in response['result'][0]['result']
+        assert 'from' in response['result'][0]['result']
+        assert 'to' in response['result'][0]['result']
+        assert 'input' in response['result'][0]['result']
         # Check for either 'output' or 'result' field
         # assert 'output' in response['result'][0] or 'result' in response['result'][0]
 

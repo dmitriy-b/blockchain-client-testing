@@ -20,7 +20,7 @@ on:
       branch:
         description: "Branch of ethereum-package to use"
         required: false
-        default: "main"
+        default: "feat/el-proxy"
   # push:
   pull_request:
 
