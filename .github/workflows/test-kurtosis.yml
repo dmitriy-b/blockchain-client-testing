@@ -68,14 +68,29 @@ jobs:
           echo "Using branch: ${{ github.event.inputs.branch || 'main' }}"
           ls -la ethereum-package
           ls -la /home/runner/work/blockchain-client-testing/blockchain-client-testing/
-
-      - name: Kurtosis Tests
-        uses: kurtosis-tech/kurtosis-github-action@v1
-        with:
-          path: 'ethereum-package/kurtosis.yml'  # Use the local path to the cloned repository
-          args-file: 'ethereum-package/minimal.yaml'
+        
+      - name: Setup Kurtosis
+        run: |
+          echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
+          sudo apt update
+          if [ "${{ inputs.version }}" = "latest" ]; then
+            sudo apt install kurtosis-cli
+          else
+            sudo apt install kurtosis-cli=${{ inputs.kurtosis_version }}
+          fi
+          kurtosis analytics disable
+          echo "$(dirname $(which kurtosis))" >> $GITHUB_PATH
+        shell: bash
                                                    
 
+      - name: Run the Kurtosis package
+        run: |
+          TRIMMED_PATH="${PATH//\/usr\/bin:/}"
+          BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
+          ENCLAVE_NAME="${BRANCH_NAME//\//-}"
+          kurtosis enclave rm ${ENCLAVE_NAME} -f 2>/dev/null || echo "Couldn't delete perhaps first run"
+          kurtosis run ethereum-package --args-file ethereum-package/minimal.yaml --enclave ${ENCLAVE_NAME} | tee kurtosis_output.txt
+        shell: bash
       - name: Install Python dependencies
         run: |
           ls -la
