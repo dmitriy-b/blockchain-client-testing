@@ -71,7 +71,7 @@ jobs:
       - name: Kurtosis Tests
         uses: kurtosis-tech/kurtosis-github-action@v1
         with:
-          path: './ethereum-package'  # Use the local path to the cloned repository
+          path: 'ethereum-package'  # Use the local path to the cloned repository
           args-file: 'ethereum-package/minimal.yaml'
                                                    
 
