@@ -136,9 +136,9 @@ def test_debug_trace_block_by_number(client):
     assert 'result' in response
     assert isinstance(response['result'], list)
     if len(response['result']) > 0:
-        assert 'type' in response['result'][0]
-        assert 'from' in response['result'][0]
-        assert 'to' in response['result'][0]
+        assert 'type' in response['result'][0]['result']
+        assert 'from' in response['result'][0]['result']
+        assert 'to' in response['result'][0]['result']
 
 @pytest.mark.api
 @pytest.mark.debug
@@ -170,9 +170,9 @@ def test_debug_trace_block_by_hash(client):
     assert 'result' in response
     assert isinstance(response['result'], list)
     if len(response['result']) > 0:
-        assert 'type' in response['result'][0]
-        assert 'from' in response['result'][0]
-        assert 'to' in response['result'][0]
+        assert 'type' in response['result'][0]['result']
+        assert 'from' in response['result'][0]['result']
+        assert 'to' in response['result'][0]['result']
 
 
 @pytest.mark.api
@@ -276,9 +276,9 @@ def test_debug_trace_block_by_number_with_tracer_config(client):
     assert isinstance(response['result'], list)
     if len(response['result']) > 0:
         #assert 'type' in response['result'][0]
-        assert 'from' in response['result'][0]
-        assert 'to' in response['result'][0]
-        assert 'calls' not in response['result'][0]  # Ensure only top-level call is returned
+        assert 'from' in response['result'][0]['result']
+        assert 'to' in response['result'][0]['result']
+        assert 'calls' not in response['result'][0]['result']  # Ensure only top-level call is returned
 
 @pytest.mark.api
 def test_get_balance(client, configuration):

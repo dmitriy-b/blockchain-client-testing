@@ -73,8 +73,9 @@ def configuration(request):
     cfg[env]["env_name"] = env
     cfg[env].context = {}
     logger.remove()
-    logger.add(sys.stdout, level=cfg[env]['log_stdout_level'])
-    logger.add(f"reports/{cfg[env]['log_file_name']}.log", level=cfg[env]['log_file_level'])
+    # Use enqueue=False to prevent buffering but remove flush parameter
+    logger.add(sys.stdout, level=cfg[env]['log_stdout_level'], enqueue=False)
+    logger.add(f"reports/{cfg[env]['log_file_name']}.log", level=cfg[env]['log_file_level'], enqueue=False)
     logger.debug("Updated configuration ...")
     logger.debug(f"Base URL: {cfg[env]['base_url']}")
     return cfg[env]
@@ -231,6 +232,7 @@ def deploy_contract(client: JsonRpcClient, configuration):
             raise TimeoutError("Contract deployment transaction was not mined")
             
         contract_address = receipt['result']['contractAddress']
+        
         return {
             'address': contract_address,
             'transaction_hash': tx_hash,
