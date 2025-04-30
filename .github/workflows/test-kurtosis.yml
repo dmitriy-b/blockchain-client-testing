@@ -64,8 +64,8 @@ jobs:
 
       - name: Clone ethereum-package repository
         run: |
-          git clone -b ${{ github.event.inputs.branch || 'main' }} https://github.com/dmitriy-b/ethereum-package.git
-          echo "Using branch: ${{ github.event.inputs.branch || 'main' }}"
+          git clone -b ${{ github.event.inputs.branch || 'feat/el-proxy' }} https://github.com/dmitriy-b/ethereum-package.git
+          echo "Using branch: ${{ github.event.inputs.branch || 'feat/el-proxy' }}"
           ls -la ethereum-package
           ls -la /home/runner/work/blockchain-client-testing/blockchain-client-testing/
         
