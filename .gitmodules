@@ -1,0 +1,4 @@
+[submodule "ethereum-package"]
+	path = ethereum-package
+	url = https://github.com/dmitriy-b/ethereum-package.git
+	branch = feat/el-proxy

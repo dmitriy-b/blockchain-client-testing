@@ -126,16 +126,48 @@ def create_transaction(client: JsonRpcClient, configuration):
             'value': web3_client.to_wei(0.001, 'ether'),
             'gas': 21000,
             'gasPrice': web3_client.eth.gas_price,
-            'nonce': web3_client.eth.get_transaction_count(funding_account_address),
+            # Nonce will be set in the retry loop
+            # 'nonce': web3_client.eth.get_transaction_count(funding_account_address),
             'chainId': web3_client.eth.chain_id,
         }
 
         # Sign the funding transaction (you'll need the private key of the funding account)
         funding_account_private_key = configuration["private_key"]  # Replace with actual private key
-        signed_funding_tx = Account.sign_transaction(funding_tx, funding_account_private_key)
+        # signed_funding_tx = Account.sign_transaction(funding_tx, funding_account_private_key)
 
         # Send the signed funding transaction
-        funding_tx_hash = web3_client.eth.send_raw_transaction(signed_funding_tx.raw_transaction)
+        # funding_tx_hash = web3_client.eth.send_raw_transaction(signed_funding_tx.raw_transaction)
+        
+        # Attempt to send the funding transaction with retries on nonce issues
+        max_attempts = 5
+        attempt = 0
+        funding_tx_hash = None
+        last_exception = None
+        while attempt < max_attempts:
+            try:
+                current_nonce = web3_client.eth.get_transaction_count(funding_account_address)
+                funding_tx['nonce'] = current_nonce # Ensure nonce is fresh for this attempt
+                signed_funding_tx = Account.sign_transaction(funding_tx, funding_account_private_key)
+                logger.info(f"Attempt {attempt + 1} of {max_attempts} to send funding TX with nonce {current_nonce} from {funding_account_address} to {account.address}")
+                funding_tx_hash = web3_client.eth.send_raw_transaction(signed_funding_tx.raw_transaction)
+                logger.info(f"Funding TX sent, hash: {funding_tx_hash.hex()}")
+                break # Success
+            except Exception as e: # Broad exception to catch web3 errors
+                last_exception = e
+                logger.warning(f"Funding TX attempt {attempt + 1} failed: {e}")
+                if "ReplacementNotAllowed" in str(e) or "nonce too low" in str(e).lower() or "known transaction" in str(e).lower():
+                    time.sleep(3)
+                    attempt += 1
+                else:
+                    raise e # Re-raise if it's not a known nonce issue
+        
+        if funding_tx_hash is None:
+            logger.error(f"Failed to send funding transaction after {max_attempts} attempts. Last error: {last_exception}")
+            if last_exception is not None: # Ensure last_exception is not None before raising
+                raise last_exception # Re-raise the last exception if all attempts failed
+            else: # Fallback if last_exception was somehow not set (shouldn't happen)
+                raise RuntimeError("Failed to send funding transaction after multiple attempts, unknown error.")
+
         web3_client.eth.wait_for_transaction_receipt(funding_tx_hash, timeout=int(configuration["transaction_timeout"]))
 
         # Create the main transaction
@@ -215,28 +247,53 @@ def deploy_contract(client: JsonRpcClient, configuration):
             configuration["private_key"]
         )
         
-        tx_hash = client.call(
+        send_tx_response = client.call(
             "eth_sendRawTransaction",
             [signed_tx.raw_transaction.hex()]
-        )['result']
+        )
+        
+        if 'result' in send_tx_response:
+            tx_hash = send_tx_response['result']
+            logger.info(f"Contract deployment transaction sent: {tx_hash}")
+        elif 'error' in send_tx_response:
+            logger.error(f"Failed to send contract deployment transaction. Error: {send_tx_response['error']}")
+            raise ValueError(f"Failed to send contract deployment transaction: {send_tx_response['error']}")
+        else:
+            logger.error(f"Unexpected response when sending contract deployment transaction: {send_tx_response}")
+            raise ValueError(f"Unexpected response when sending contract deployment transaction: {send_tx_response}")
         
         # Wait for deployment to complete
-        receipt = None
-        for _ in range(30):  # 30 attempts with 2-second intervals
-            receipt = client.call("eth_getTransactionReceipt", [tx_hash])
-            if receipt['result'] is not None:
+        receipt_polling_attempts = 30
+        last_receipt_response = None
+        actual_receipt_data = None
+
+        for attempt in range(receipt_polling_attempts):
+            logger.info(f"Polling for transaction receipt {tx_hash}, attempt {attempt + 1}/{receipt_polling_attempts}")
+            last_receipt_response = client.call("eth_getTransactionReceipt", [tx_hash])
+            if last_receipt_response.get('result') is not None:
+                actual_receipt_data = last_receipt_response['result']
+                logger.info(f"Transaction receipt found for {tx_hash}: {actual_receipt_data}")
                 break
+            elif last_receipt_response.get('error'):
+                logger.warning(f"Error polling for receipt for tx {tx_hash} (attempt {attempt + 1}/{receipt_polling_attempts}): {last_receipt_response['error']}. Retrying...")
+            else:
+                 logger.warning(f"Unexpected response while polling for receipt for tx {tx_hash} (attempt {attempt + 1}/{receipt_polling_attempts}): {last_receipt_response}. Retrying...")
             time.sleep(2)
             
-        if receipt is None or receipt['result'] is None:
-            raise TimeoutError("Contract deployment transaction was not mined")
+        if actual_receipt_data is None:
+            logger.error(f"Contract deployment transaction {tx_hash} was not mined or receipt retrieval failed after {receipt_polling_attempts} attempts. Last response: {last_receipt_response}")
+            raise TimeoutError(f"Contract deployment transaction {tx_hash} was not mined or receipt retrieval failed. Last response: {last_receipt_response}")
             
-        contract_address = receipt['result']['contractAddress']
+        contract_address = actual_receipt_data.get('contractAddress')
+        if not contract_address:
+            logger.error(f"'contractAddress' not found in receipt for transaction {tx_hash}. Receipt: {actual_receipt_data}")
+            raise ValueError(f"'contractAddress' not found in receipt for transaction {tx_hash}. Receipt: {actual_receipt_data}")
         
+        logger.info(f"Contract deployed successfully. Address: {contract_address}, TxHash: {tx_hash}")
         return {
             'address': contract_address,
             'transaction_hash': tx_hash,
-            'receipt': receipt['result']
+            'receipt': actual_receipt_data
         }
         
     return _deploy_contract
