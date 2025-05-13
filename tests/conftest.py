@@ -14,16 +14,62 @@ import json
 from pathlib import Path
 
 def create_transaction_if_not_exist(client, ensure_transaction):
-    hash = ["latest", True]
-    block = client.call("eth_getBlockByNumber", hash)
-    if len(block['result']['transactions']) == 0:
-        tr = ensure_transaction()
-        hash = [tr, True]
-        block = client.call("eth_getBlockByHash", hash)
-    while block['result'] is None or len(block['result']['transactions']) == 0:
-        time.sleep(5)
-        block = client.call("eth_getBlockByHash", hash)
-    return block['result']
+    latest_block_params = ["latest", True]
+    block_response = client.call("eth_getBlockByNumber", latest_block_params)
+    
+    block_data = None
+    if 'result' in block_response and block_response['result'] is not None:
+        block_data = block_response['result']
+    elif 'error' in block_response:
+        logger.error(f"Error calling eth_getBlockByNumber('{latest_block_params}'): {block_response['error']}")
+        # Depending on desired behavior, you might want to raise an exception here
+        # or attempt to create a transaction anyway if that's the fallback.
+        # For now, let's assume if we can't get the latest block, we should try to create a transaction.
+        pass # Will proceed to create a transaction
+    else:
+        logger.error(f"Unexpected response from eth_getBlockByNumber('{latest_block_params}'): {block_response}")
+        # Similar to above, decide on behavior. For now, proceeding.
+        pass # Will proceed to create a transaction
+
+    if block_data is None or len(block_data.get('transactions', [])) == 0:
+        logger.info("No transactions in the latest block or failed to fetch block, ensuring a transaction exists.")
+        tx_block_hash = ensure_transaction() # This returns a block hash
+        # We need to fetch the block that contains this transaction
+        # The transaction hash itself isn't directly returned by ensure_transaction in its current form
+        # ensure_transaction returns the blockHash where the transaction was included.
+        block_by_hash_params = [tx_block_hash, True]
+        block_response = client.call("eth_getBlockByHash", block_by_hash_params)
+        
+        retries = 5
+        for i in range(retries):
+            if 'result' in block_response and block_response['result'] is not None and len(block_response['result'].get('transactions', [])) > 0:
+                return block_response['result']
+            elif 'error' in block_response:
+                logger.warning(f"Error calling eth_getBlockByHash for {tx_block_hash} (attempt {i+1}/{retries}): {block_response['error']}. Retrying...")
+            else:
+                logger.warning(f"Unexpected response or no transactions in block {tx_block_hash} (attempt {i+1}/{retries}): {block_response}. Retrying...")
+            time.sleep(5) # Wait before retrying
+            block_response = client.call("eth_getBlockByHash", block_by_hash_params)
+        
+        logger.error(f"Failed to get block with transactions using hash {tx_block_hash} after {retries} retries. Last response: {block_response}")
+        # If it still fails, we might need to raise an error or return a specific failure indicator
+        raise RuntimeError(f"Failed to retrieve block with transactions for hash {tx_block_hash} after multiple attempts.")
+
+    # This part of the original logic seems to assume 'block' variable is the one with transactions.
+    # The logic has been updated above to directly return the block fetched by hash.
+    # The while loop below is likely redundant if the above retry logic for getBlockByHash works correctly.
+    # However, I will keep a similar loop structure for safety, operating on the last `block_response`
+    # from the successful `eth_getBlockByNumber` if it had transactions, or from `eth_getBlockByHash`.
+
+    # If we found transactions in the initial eth_getBlockByNumber call:
+    if block_data and len(block_data.get('transactions', [])) > 0:
+        return block_data
+    
+    # Fallback if initial block fetch failed but create_transaction succeeded
+    # and the subsequent getBlockByHash also failed to return a valid block (covered by raise above).
+    # This path should ideally not be reached if the above logic is sound.
+    logger.error("Fell through create_transaction_if_not_exist logic, this indicates an issue.")
+    raise RuntimeError("Could not obtain a block with transactions.")
 
 def pytest_addoption(parser):
     parser.addoption("--env", action="store", default="general",
