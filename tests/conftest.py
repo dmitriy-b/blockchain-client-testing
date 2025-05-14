@@ -185,7 +185,7 @@ def create_transaction(client: JsonRpcClient, configuration):
         # funding_tx_hash = web3_client.eth.send_raw_transaction(signed_funding_tx.raw_transaction)
         
         # Attempt to send the funding transaction with retries on nonce issues
-        max_attempts = 5
+        max_attempts = 7
         attempt = 0
         funding_tx_hash = None
         last_exception = None
@@ -201,7 +201,7 @@ def create_transaction(client: JsonRpcClient, configuration):
             except Exception as e: # Broad exception to catch web3 errors
                 last_exception = e
                 logger.warning(f"Funding TX attempt {attempt + 1} failed: {e}")
-                if "ReplacementNotAllowed" in str(e) or "nonce too low" in str(e).lower() or "known transaction" in str(e).lower():
+                if "ReplacementNotAllowed" in str(e) or "nonce too low" in str(e).lower() or "known transaction" in str(e).lower() or "alreadyknown" in str(e).lower() or "pruned history unavailable" in str(e).lower():
                     time.sleep(3)
                     attempt += 1
                 else:
