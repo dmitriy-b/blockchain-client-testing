@@ -138,7 +138,7 @@ def test_personal_sign(client, configuration):
     # Verify signature format
     assert isinstance(signature, str)
     assert signature.startswith('0x')
-    assert len(signature) == 130  # Standard Ethereum signature length (0x + 128 hex chars)
+    assert len(signature) == 132  # Standard Ethereum signature length (0x + 65 bytes including v)
 
 @pytest.mark.api
 @pytest.mark.personal
@@ -159,15 +159,11 @@ def test_personal_ec_recover(client, configuration):
     assert 'result' in sign_response, f"Failed to sign message: {sign_response.get('error', {}).get('message', 'Unknown error')}"
     signature = sign_response['result']
     
-    # Try both possible recovery IDs (27 and 28)
+    # personal_sign now includes 'v' in the signature, so we pass it directly
+    response = client.call("personal_ecRecover", [message, signature])
     recovered_address = None
-    for v in ["1b", "1c"]:  # 27 (0x1b) and 28 (0x1c)
-        signature_with_v = signature + v
-        response = client.call("personal_ecRecover", [message, signature_with_v])
-        if 'result' in response and response['result'].lower() == account.lower():
-            recovered_address = response['result']
-            break
-    
-    assert recovered_address is not None, "Failed to recover the correct address with either recovery ID"
-    assert recovered_address.lower() == account.lower()
+    if 'result' in response and response['result'].lower() == account.lower():
+        recovered_address = response['result']
+
+    assert recovered_address is not None, f"Failed to recover the correct address. Signature: {signature}, Response: {response}"
   
