@@ -124,7 +124,7 @@ def send_to_slack(
         data = load_test_results(report_name)
         summary = json.dumps(data["summary"])
         
-        if "passed" not in data["summary"] or data["summary"]["passed"] < data["summary"]["total"]:
+        if "passed" not in data["summary"] or data["summary"]["passed"] <= data["summary"]["total"] - data["summary"].get("skipped", 0):
             verdict = "fail"
             failed_tests = get_failed_tests(data)
             additional_message = "Failed tests: " + ", ".join(failed_tests)
