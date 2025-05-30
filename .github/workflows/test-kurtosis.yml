@@ -85,6 +85,7 @@ jobs:
           BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
           ENCLAVE_NAME="${BRANCH_NAME//\//-}"
           kurtosis enclave rm ${ENCLAVE_NAME} -f 2>/dev/null || echo "Couldn't delete perhaps first run"
+          docker pull nethermindeth/nethermind:master
           kurtosis run ethereum-package --args-file ethereum-package/minimal.yaml --enclave ${ENCLAVE_NAME} | tee kurtosis_output.txt
         shell: bash
       - name: Install Python dependencies
