@@ -20,7 +20,7 @@ on:
       branch:
         description: "Branch of ethereum-package to use"
         required: false
-        default: "feat/el-proxy"
+        default: "main"
   # push:
   pull_request:
 
@@ -64,8 +64,8 @@ jobs:
 
       - name: Clone ethereum-package repository
         run: |
-          git clone -b ${{ github.event.inputs.branch || 'feat/el-proxy' }} https://github.com/dmitriy-b/ethereum-package.git
-          echo "Using branch: ${{ github.event.inputs.branch || 'feat/el-proxy' }}"
+          git clone -b ${{ github.event.inputs.branch || 'main' }} https://github.com/dmitriy-b/ethereum-package.git
+          echo "Using branch: ${{ github.event.inputs.branch || 'main' }}"
           ls -la ethereum-package
           ls -la /home/runner/work/blockchain-client-testing/blockchain-client-testing/
         
@@ -86,7 +86,7 @@ jobs:
           ENCLAVE_NAME="${BRANCH_NAME//\//-}"
           kurtosis enclave rm ${ENCLAVE_NAME} -f 2>/dev/null || echo "Couldn't delete perhaps first run"
           docker pull nethermindeth/nethermind:master
-          kurtosis run ethereum-package --args-file ethereum-package/minimal.yaml --enclave ${ENCLAVE_NAME} | tee kurtosis_output.txt
+          kurtosis run ethereum-package --args-file .github/kurtosis/minimal.yaml --enclave ${ENCLAVE_NAME} | tee kurtosis_output.txt
         shell: bash
       - name: Install Python dependencies
         run: |
