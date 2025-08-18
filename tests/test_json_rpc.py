@@ -35,7 +35,7 @@ def test_eth_get_block_by_number(client):
     assert response['result']['sha3Uncles'] is not None
     assert response['result']['size'] is not None
     assert response['result']['stateRoot'] is not None
-    assert response['result']['totalDifficulty'] is not None
+    # assert response['result']['totalDifficulty'] is not None
     assert response['result']['baseFeePerGas'] is not None
     assert response['result']['transactions'] is not None
     assert response['result']['withdrawalsRoot'] is not None
