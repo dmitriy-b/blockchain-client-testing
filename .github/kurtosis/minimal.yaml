@@ -1,6 +1,6 @@
 participants:
   - el_type: nethermind
-    cl_type: lighthouse
+    cl_type: lodestar
     snooper_enabled: false
   #   # el_proxy_enabled: true
   # - el_type: nethermind
