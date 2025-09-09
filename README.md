@@ -1,6 +1,5 @@
 # blockchain-client-testing
-[![Blockchain JSON-RPC Tests](https://github.com/dmitriy-b/blockchain-client-testing/actions/workflows/test.yml/badge.svg)](https://github.com/dmitriy-b/blockchain-client-testing/actions/workflows/test.yml)
-
+[![Blockchain JSON-RPC Tests](https://github.com/dmitriy-b/blockchain-client-testing/actions/workflows/test-kurtosis.yml/badge.svg)](https://github.com/dmitriy-b/blockchain-client-testing/actions/workflows/test-kurtosis.yml)
 # Blockchain JSON-RPC Tests
 
 This project (PoC) includes a set of JSON-RPC tests for a etherium blockchain using Nethermind client. The tests are run with pytest and Locust for performance testing. The GitHub Actions pipeline automates the setup, execution, and reporting of these tests.
