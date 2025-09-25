@@ -45,6 +45,6 @@ jobs:
       - name: Send Slack report
         uses: dmitriy-b/ethereum-testing-tools/.github/actions/slack-report@main
         with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
           verdict: pass
-          description: "Docker image published"
+          description: "Docker image for ${{ env.IMAGE_NAME }} published"
