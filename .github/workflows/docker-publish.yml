@@ -41,3 +41,10 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Send Slack report
+        uses: dmitriy-b/ethereum-testing-tools/.github/actions/slack-report@main
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          verdict: pass
+          description: "Docker image published"
